@@ -1,6 +1,7 @@
 // this is a compiler directive, dictates that the source file must be compiled with Solidity version 0.8.0 or higher
 pragma solidity ^0.8.0;
 
+
 // contracts are a class and the basic building block of solidity applications
 // bundles together state variables (data) and functions (behavior/logic) that can interact with that data
 // becomes immutable once deployed to the blockchain
@@ -14,6 +15,7 @@ contract TicTacToe {
 
     // adress: the standard data type for a 20-byte ehtereum address
     // payable: a modifier keyword to indicate that this address is capable of receiving ether, important for games with stakes
+    // in solodity, when you define a state variable witht the public visibility specfifer, the compiler doesn't just store the variable, it generates a getter function for it
     address payable public playerX;
     address payable public playerO;
     address public nextPlayer;
@@ -34,5 +36,34 @@ contract TicTacToe {
         // initializes nextPlayer to playerX, meaning playerX will make the first move
         nextPlayer = playerX;
         isGameOver = false;
+    }
+
+    // allow players to make moves
+    function makeMove(uint8 row, uint8 col) public {
+        // rule checks using require
+
+        // ensure that only the current player can move
+        require(msg.sender == nextPlayer, "It's not your turn.");
+
+        // ensure the game is not over yet
+        require(!isGameOver, "The game is over.");
+
+        // ensure coordinates (player moves) are valid and within bounds
+        require(row < 3 && col < 3, "Invalid row or column placement");
+
+        // ensure the selected cell is empty
+        require(board[row][col] == 0, "Cell is already taken.");
+
+        // execute the move
+        // assign the correct player's marker
+        if (msg.sender == playerX) {
+            board[row][col] = 1;
+        } else {
+            board[row][col] = 2;
+        }
+
+        // update the gamestate
+        // switchTurn()
+        // checkWin()
     }
 }

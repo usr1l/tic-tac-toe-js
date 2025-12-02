@@ -59,4 +59,32 @@ describe("TicTacToe", function () {
       TicTacToeFactory.deploy(deployer.address) // Deploying with deployer's address as Player O
     ).to.be.revertedWith("Player O must be a different address.");
   });
+
+  it("Should allow a player to make a move and switch turns", async function () {
+    // playerX (deployer) makes the first move
+    const startingPlayer = deployer.address;
+    const nextTurnPlayer = playerO.address;
+
+    // playerX makes a move at (0, 0)
+    await ticTacToe.makeMove(0, 0);
+
+    // check if the board was updated correctly (0, 0) should be marked with 1
+    expect(await ticTacToe.board(0, 0)).to.equal(1);
+
+    // verify if the turn has switched to playerO
+    expect(await ticTacToe.nextPlayer()).to.equal(nextTurnPlayer);
+
+    // playerO makes a move at (1, 1)
+    // in Ethers.js (hardhat uses to interact with your contracts), .connect() is used to change the ideentity of the account that will sign and send a transaction
+    // it tells the contract, "for this next transaction, act as this specific user"
+    // think of smart contract function calls as writing checks from different bank accounts
+    // when you sign a function without .connect(), its like the default hardhat account (playerX in this case) is writing the check
+    // when you use .connect(playerO), its like playerO is writing the check instead
+    await ticTacToe.connect(playerO).makeMove(1, 1);
+
+    //  check if the board was correctly updated, (1, 1) should be marked with 2
+    expect(await ticTacToe.board(1, 1)).to.equal(2);
+
+    expect(await ticTacToe.nextPlayer().to.equal(startingPlayer));
+  });
 });

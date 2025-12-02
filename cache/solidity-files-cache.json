@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/tkny/projects/tic-tac-toe-js/contracts/TicTacToe.sol": {
-      "lastModificationDate": 1764652327028,
-      "contentHash": "b9a0dda0eb66c6b9745d7bf985aff0a3",
+      "lastModificationDate": 1764700619350,
+      "contentHash": "8806c0ec67e9bdfcc4e6826dc3a4db81",
       "sourceName": "contracts/TicTacToe.sol",
       "solcConfig": {
         "version": "0.8.28",
