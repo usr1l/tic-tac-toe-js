@@ -63,8 +63,8 @@ contract TicTacToe {
         }
 
         // update the gamestate
-        // switchTurn()
-        // checkWin()
+        switchTurn();
+        checkWin();
     }
 
     // private makes it so that only function within this contract can call it

@@ -85,6 +85,6 @@ describe("TicTacToe", function () {
     //  check if the board was correctly updated, (1, 1) should be marked with 2
     expect(await ticTacToe.board(1, 1)).to.equal(2);
 
-    expect(await ticTacToe.nextPlayer().to.equal(startingPlayer));
+    expect(await ticTacToe.nextPlayer()).to.equal(startingPlayer);
   });
 });
