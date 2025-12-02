@@ -26,8 +26,13 @@ contract TicTacToe {
         // think of it like this: playerX is the address that deploys the contract, the argument entered into constructor is playerO, and is passed in during the deployment
         playerX = payable(msg.sender);
 
-        // essential security check and error handling mechanism to in Solofity
+        // essential security check and error handling mechanism to in Solidity
+        // REQUIRE: checks that playerX and playerO are different addresses, if not, it throws and error and reverts the transaction, gas spent is refunded
         require(playerX != _playerO, "Player O must be a different address.");
+        playerO = _playerO;
 
+        // initializes nextPlayer to playerX, meaning playerX will make the first move
+        nextPlayer = playerX;
+        isGameOver = false;
     }
 }
