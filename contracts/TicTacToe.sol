@@ -66,4 +66,16 @@ contract TicTacToe {
         // switchTurn()
         // checkWin()
     }
+
+    // private makes it so that only function within this contract can call it
+    // internal is simimlar to private, but allows inheritance, i.e. child contracts to access it, or inherited contracts
+    function switchTurn() private {
+        if (nextPlayer == playerX) {
+            nextPlayer = playerO;
+        } else {
+            nextPlayer = playerX;
+        }
+    }
+
+
 }
