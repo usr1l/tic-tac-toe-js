@@ -77,5 +77,43 @@ contract TicTacToe {
         }
     }
 
+    function checkWin()private {
+        // find the marker of the player who just made a move
+        uint8 marker;
+        if (msg.sender == playerX) {
+            marker = 1;
+        } else {
+            marker = 2;
+        }
 
+        // check for rows, columns, and diagonals win condition
+        for (uint8 i = 0; i < 3; i++) {
+            if (board[i][0] == marker && board[i][1] == marker && board[i][2] == marker) {
+                isGameOver = true;
+                return;
+            }
+            if (board[0][i] == marker && board[1][i] == marker && board[2][i] == marker) {
+                isGameOver = false;
+                return;
+            }
+        }
+        if (board[0][0] == marker && board[1][1] == marker && board[2][2] == marker) {
+            isGameOver = true;
+            return;
+        }
+        if (board[0][2] == marker && board[1][1] == marker && board[2][0] == marker) {
+            isGameOver = true;
+            return;
+        }
+
+        // check for draw condition (all cells filled but no winner)
+        uint8 filledCells = 0;
+        for (uint i = 0; i < 3; i++) {
+            for (uint8 j = 0; j < 3; j++) {
+                if (board[i][j] != 0) filledCells++;
+            }
+        }
+        // if all cells are filled, end the game
+        if (filledCells == 9) isGameOver = false;
+    }
 }
