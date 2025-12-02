@@ -1,6 +1,10 @@
-require("@nomicfoundation/hardhat-toolbox");
+import "@nomicfoundation/hardhat-toolbox";
 
-/** @type import('hardhat/config').HardhatUserConfig */
-module.exports = {
+const config = {
+  // define the solidity compiler version
   solidity: "0.8.28",
+
+  // add any other configuration details here
 };
+
+export default config;

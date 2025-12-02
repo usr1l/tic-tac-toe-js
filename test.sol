@@ -29,5 +29,11 @@ contract TicTacToe {
 
         nextPlayer = playerX; // Player X (deployer) starts first
         isGameOver = false;
-    }
-}
+    };
+
+    // allow players to make moves
+    // function makeMove(uint8 row, uint8 col) public {
+    //     // ensure only curr player can make a move, rule check using require
+    //     require(msg.sender == nextPlayer, "It's not your turn.");
+    // };
+};
