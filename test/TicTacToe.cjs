@@ -87,4 +87,61 @@ describe("TicTacToe", function () {
 
     expect(await ticTacToe.nextPlayer()).to.equal(startingPlayer);
   });
+
+  // reverserion test
+  it("Should prevent a player does not move to a spot that is already taken", async function () {
+    await ticTacToe.makeMove(1, 1);
+
+    await ticTacToe.connect(playerO).makeMove(0, 0);
+
+    // the placement of await depends on what we are asserting against
+    // if the await is inside expect(), we are waiting for the function within expect() to complete, before being compared/asserted, i.e. get address before comparing equal to
+    // if the await is outside expect(), we are testing for a transaction to revert/fail, chai framework needs to intercept the promise before it resolves or rejects noarmally
+    // await tells javascript to wait for the entire process (sending the transaction, rejecting by the blockchain, and reversion error) to finish before moving on
+    // absense of await outside expect() would make javascript move on before the transaction is fully processed, leading
+    await expect(
+      // playerX tries to move to (0, 0) again
+      ticTacToe.makeMove(0, 0)
+    ).to.be.revertedWith("Cell is already taken."); // to.be.revertedWith() is a waffle matcher that works with the promise created by expect()
+
+    expect(await ticTacToe.nextPlayer()).to.equal(deployer.address);
+  })
+
+  it("Should check that the isGameOver flag is set to true when a player gets three in a row", async function () {
+    await ticTacToe.makeMove(0, 0);
+    await ticTacToe.connect(playerO).makeMove(1, 0);
+    await ticTacToe.makeMove(0, 1);
+    await ticTacToe.connect(playerO).makeMove(1, 1);
+    await ticTacToe.makeMove(0, 2);
+
+    // check if isGameOver is true
+    expect(await ticTacToe.isGameOver()).to.equal(true);
+
+    // verify that the player/turn does not switch
+    expect(await ticTacToe.nextPlayer()).to.equal(deployer.address);
+
+    // ensure that no more moves can be made
+    await expect(
+      ticTacToe.connect(playerO).makeMove(2, 2)
+    ).to.be.revertedWith("The game is over.")
+  })
+
+  it("Should check that game is over when all the cells are filled", async function () {
+    await ticTacToe.makeMove(0, 0);
+    await ticTacToe.connect(playerO).makeMove(0, 1);
+    await ticTacToe.makeMove(0, 2);
+    await ticTacToe.connect(playerO).makeMove(1, 1);
+    await ticTacToe.makeMove(1, 0);
+    await ticTacToe.connect(playerO).makeMove(1, 2);
+    await ticTacToe.makeMove(2, 1);
+    await ticTacToe.connect(playerO).makeMove(2, 0);
+    await ticTacToe.makeMove(2, 2);
+
+    expect(await ticTacToe.isGameOver()).to.equal(true);
+    expect(await ticTacToe.nextPlayer()).to.equal(deployer.address);
+
+    await expect(
+      ticTacToe.connect(playerO).makeMove(0, 0)
+    ).to.be.revertedWith("The game is over.");
+  })
 });
