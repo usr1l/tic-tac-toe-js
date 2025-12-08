@@ -41,7 +41,7 @@ function Board({}) {
                 <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
                         <Square
-                            space={`space[${i}][${j}]`}
+                            key={`space[${i}][${j}]`}
                             value={board[ i ][ j ]}
                             handleTileClick={() => handleTileClick(i, j)}
                         />
