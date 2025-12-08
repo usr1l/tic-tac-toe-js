@@ -1,5 +1,6 @@
 import { useSyncProviders } from './hooks/useSyncProvider.js';
 // import { TICTACTOE_ABI, TICTACTOE_ADDRESS, SEPOLIA_CHAIN_ID } from './config.js';
+import Game from './components/Game/Game.jsx';
 import './App.css';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
           <div>No Announced Wallet</div>
         )}
       </div>
+      <Game />
     </div>
   )
 }
