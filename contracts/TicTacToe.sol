@@ -77,7 +77,7 @@ contract TicTacToe {
         }
     }
 
-    function checkWin()private {
+    function checkWin() private {
         // find the marker of the player who just made a move
         uint8 marker;
         if (msg.sender == playerX) {
