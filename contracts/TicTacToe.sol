@@ -42,11 +42,11 @@ contract TicTacToe {
     function makeMove(uint8 row, uint8 col) public {
         // rule checks using require
 
-        // ensure that only the current player can move
-        require(msg.sender == nextPlayer, "It's not your turn.");
-
         // ensure the game is not over yet
         require(!isGameOver, "The game is over.");
+
+        // ensure that only the current player can move
+        require(msg.sender == nextPlayer, "It's not your turn.");
 
         // ensure coordinates (player moves) are valid and within bounds
         require(row < 3 && col < 3, "Invalid row or column placement");
@@ -63,8 +63,8 @@ contract TicTacToe {
         }
 
         // update the gamestate
-        switchTurn();
         checkWin();
+        if (!isGameOver) switchTurn();
     }
 
     // private makes it so that only function within this contract can call it
@@ -77,7 +77,7 @@ contract TicTacToe {
         }
     }
 
-    function checkWin()private {
+    function checkWin() private {
         // find the marker of the player who just made a move
         uint8 marker;
         if (msg.sender == playerX) {
@@ -93,15 +93,14 @@ contract TicTacToe {
                 return;
             }
             if (board[0][i] == marker && board[1][i] == marker && board[2][i] == marker) {
-                isGameOver = false;
+                isGameOver = true;
                 return;
             }
         }
         if (board[0][0] == marker && board[1][1] == marker && board[2][2] == marker) {
             isGameOver = true;
             return;
-        }
-        if (board[0][2] == marker && board[1][1] == marker && board[2][0] == marker) {
+        } else if (board[0][2] == marker && board[1][1] == marker && board[2][0] == marker) {
             isGameOver = true;
             return;
         }
@@ -114,6 +113,6 @@ contract TicTacToe {
             }
         }
         // if all cells are filled, end the game
-        if (filledCells == 9) isGameOver = false;
+        if (filledCells == 9) isGameOver = true;
     }
 }
