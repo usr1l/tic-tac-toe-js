@@ -16,13 +16,18 @@ h1 {
 .game-board {
     display: flex;
     flex-direction: column;
-    border: 5px solid #007bff;
     border-radius: 8px;
+    align-items: center;
     /* overflow: hidden; */
 }
 
 .game-board-row {
     display: flex;
+}
+
+.restart {
+    margin-top: 20px;
+    width: 100px;
 }
 
 .square {
