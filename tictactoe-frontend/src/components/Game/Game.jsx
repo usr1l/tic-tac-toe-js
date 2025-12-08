@@ -1,21 +1,20 @@
 import { useState } from "react";
 import "./Game.css";
 
-const BOARD = Array(3).fill(null).map(() => Array(3).fill(0));
+const BOARD = Array(3).fill(null).map(() => Array(3).fill(null));
 
-const symbol = player => {
-    if (player === 1) return 'X';
-    if (player === 2) return 'O';
+const symbol = value => {
+    if (value === 1) return 'X';
+    if (value === 2) return 'O';
     return '';
 }
 
 // const [ turn, setTurn ] = useState("X");
 
-function Square({ key, player }) {
+function Square({ key, value }) {
     return (
         <div key={key} className="square">
-            {/* {symbol(player)} */}
-            <div>{"X"}</div>
+            {symbol(value)}
         </div>
     );
 }
@@ -27,7 +26,7 @@ function Board({}) {
             {board.map((row, i) => (
                 <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
-                        <Square key={`space[${i}][${j}]`} />
+                        <Square key={`space[${i}][${j}]`} value={board[ i ][ j ]} />
                     ))}
                 </div>
             ))}
