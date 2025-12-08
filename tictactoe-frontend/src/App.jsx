@@ -1,10 +1,18 @@
 import { useSyncProviders } from './hooks/useSyncProvider.js';
-// import { TICTACTOE_ABI, TICTACTOE_ADDRESS, SEPOLIA_CHAIN_ID } from './config.js';
 import Game from './components/Game/Game.jsx';
+import { useWallet } from './hooks/useWallet.js';
+import { useState } from 'react';
 import './App.css';
 
 function App() {
   const providers = useSyncProviders();
+
+  const [ selectedProvider, setSelectedProvider ] = useState(null);
+  const { walletAddress, contractInstance, walletConnected } = useWallet(selectedProvider);
+
+  const handleProviderSelect = (provider) => {
+    setSelectedProvider(provider);
+  }
 
   const handleConnect = async (providerWithInfo) => {
     try {
@@ -15,6 +23,8 @@ function App() {
       console.log(e);
     }
   }
+
+
 
   return (
     <div className="App">

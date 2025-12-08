@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Square from "./Square";
+// import useEIP6963Providers from "../../hooks/"
 import "./Game.css";
 
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(null));
@@ -21,24 +22,26 @@ function Board({}) {
 
         newBoard[ r ][ c ] = turn;
         setBoard(newBoard);
+        setErrMessage("");
         turn === PLAYER_X ? setTurn(PLAYER_O) : setTurn(PLAYER_X);
         return;
     }
 
     const restart = () => {
-        const newBoard = Array(3).fill(null).map(() => Array(3).fill(null))
-        setBoard(newBoard);
+        setBoard(BOARD);
         setTurn(PLAYER_X);
+        setErrMessage("");
     }
 
     return (
         <div className="game-board">
             <h2>{`Current Player: ${turn === PLAYER_X ? "X" : "O"}`}</h2>
+            <label style={{ height: "40px", color: "red" }}>{errMessage}</label>
             {board.map((row, i) => (
                 <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
                         <Square
-                            key={`space[${i}][${j}]`}
+                            space={`space[${i}][${j}]`}
                             value={board[ i ][ j ]}
                             handleTileClick={() => handleTileClick(i, j)}
                         />
