@@ -14,6 +14,7 @@ function App() {
     setSelectedProvider(provider);
   }
 
+  // another way:
   // const handleConnect = async (providerWithInfo) => {
   //   try {
   //     const accounts = await providerWithInfo.provider.request({
@@ -39,7 +40,11 @@ function App() {
           <div>No Announced Wallet</div>
         )}
       </div>
-      <Game />
+      <Game
+        walletAddress={walletAddress}
+        contractInstance={contractInstance}
+        walletConnected={walletConnected}
+      />
     </div>
   )
 }

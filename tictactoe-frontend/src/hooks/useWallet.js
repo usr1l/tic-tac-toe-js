@@ -20,7 +20,6 @@ export function useWallet(provider) {
                 const currProvider = new ethers.BrowserProvider(provider.provider);
                 const signer = await currProvider.getSigner();
                 const address = await signer.getAddress();
-                console.log(signer, address);
                 const contract = new ethers.Contract(TICTACTOE_ADDRESS, TICTACTOE_ABI, signer);
 
                 setWalletAddress(address);

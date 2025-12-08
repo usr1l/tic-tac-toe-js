@@ -53,12 +53,18 @@ function Board({}) {
     );
 }
 
-export default function Game() {
-
+export default function Game({ walletAddress, contractInstance, walletConnected }) {
     return (
         <div className="game">
             <h1>TIC TAC TOE</h1>
-            <Board />
+            <div>
+                <div>Player 1: {walletAddress.slice(0, 8)}...</div>
+            </div>
+            {walletConnected ? (
+                <Board />
+            ) : (
+                <div>Select a wallet from above</div>
+            )}
         </div>
     );
 }
