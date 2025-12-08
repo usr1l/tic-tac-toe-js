@@ -25,7 +25,7 @@ function Board({}) {
     return (
         <div className="game-board">
             {board.map((row, i) => (
-                <div key={`row-${i}`}>
+                <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
                         <Square key={`space[${i}][${j}]`} />
                     ))}
