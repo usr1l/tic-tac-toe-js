@@ -17,27 +17,52 @@ contract TicTacToe {
     // adress: the standard data type for a 20-byte ehtereum address
     // payable: a modifier keyword to indicate that this address is capable of receiving ether, important for games with stakes
     // in solodity, when you define a state variable witht the public visibility specfifer, the compiler doesn't just store the variable, it generates a getter function for it
-    address payable public playerX;
-    address payable public playerO;
+    address payable internal playerX;
+    address payable internal playerO;
     address public nextPlayer;
     bool public isGameOver;
 
-    // CONSTRUCTOR runs only once upon deployment of the contract
-    // this constructor takes one argument, the address of playerO, underscore before the name is a common convention for function parameters
-    constructor(address payable _playerO) {
-        // msg.sender is a global variable (or builtin) that always holds the address the account or contract that initiated the current transaction
-        // think of it like this: playerX is the address that deploys the contract, the argument entered into constructor is playerO, and is passed in during the deployment
-        playerX = payable(msg.sender);
+    // variable for tracking game winner
+    address public winner;
+    
+    event GameStarted(address indexed gameAddress, address indexed pX, address indexed pO);
+    event MoveMade(address indexed player, uint8 r, uint8 c, uint8 marker);
+    event GameEnded(address indexed winner);
 
-        // essential security check and error handling mechanism to in Solidity
-        // REQUIRE: checks that playerX and playerO are different addresses, if not, it throws and error and reverts the transaction, gas spent is refunded
-        require(playerX != _playerO, "Player O must be a different address.");
+    // use initialization function for initializing multiple instances of game contract, instead of the constructor here
+    function initialize(address payable _playerX, address payable _playerO) public {
+        // crucial for access control check prevents function from being called more than once
+        // address(0) before the contract is initialized is set to 20 bytes of 0, after initializing its set to deployer address
+        require(playerX == address(0), "Game already initialized");
+        playerX = _playerX;
+
+        require(_playerO != playerX, "Other player must use a different address");
         playerO = _playerO;
 
-        // initializes nextPlayer to playerX, meaning playerX will make the first move
         nextPlayer = playerX;
         isGameOver = false;
+
+        emit GameStarted(address(this), playerX, playerO);
     }
+
+    // CONSTRUCTOR runs only once upon deployment of the contract
+    // this constructor takes one argument, the address of playerO, underscore before the name is a common convention for function parameters
+    // constructor(address payable _playerO) {
+    //     // msg.sender is a global variable (or builtin) that always holds the address the account or contract that initiated the current transaction
+    //     // think of it like this: playerX is the address that deploys the contract, the argument entered into constructor is playerO, and is passed in during the deployment
+    //     playerX = payable(msg.sender);
+
+    //     // essential security check and error handling mechanism to in Solidity
+    //     // REQUIRE: checks that playerX and playerO are different addresses, if not, it throws and error and reverts the transaction, gas spent is refunded
+    //     require(playerX != _playerO, "Player O must be a different address.");
+    //     playerO = _playerO;
+
+    //     // initializes nextPlayer to playerX, meaning playerX will make the first move
+    //     nextPlayer = playerX;
+    //     isGameOver = false;
+    // }
+
+    
 
     // allow players to make moves
     function makeMove(uint8 row, uint8 col) public {
