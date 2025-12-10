@@ -6,6 +6,17 @@
 	"output": {
 		"abi": [
 			{
+				"inputs": [
+					{
+						"internalType": "address payable",
+						"name": "_playerO",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
 				"anonymous": false,
 				"inputs": [
 					{
@@ -130,24 +141,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address payable",
-						"name": "_playerX",
-						"type": "address"
-					},
-					{
-						"internalType": "address payable",
-						"name": "_playerO",
-						"type": "address"
-					}
-				],
-				"name": "initialize",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "isGameOver",
 				"outputs": [
@@ -233,11 +226,11 @@
 	},
 	"sources": {
 		"contracts/TicTacToe.sol": {
-			"keccak256": "0xdfd2a52b4c711cb62d1eb6c44224e981576b95a28d53702443e075048d2c600b",
+			"keccak256": "0x09c87e90bef2ceb2889b8909fd9fe2e34ce7e08da7daad604a20d4a8adaaac77",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://03d35e5f1389dcc4fce76a625a9254151de3565c0f77c2552e4ea61db8f269da",
-				"dweb:/ipfs/QmTFZuEAoVxPJWiZC1hkrVRqbRzEnvJuHQ1UzNs15zjCKn"
+				"bzz-raw://61b2b750a2933cac03b552779ad9fced0798e699dd0f6ad1620ba6829af3f74d",
+				"dweb:/ipfs/QmWopnWC45jk7FShqYmazokhLeR89Stwz5CTaLtot5L9iu"
 			]
 		}
 	},

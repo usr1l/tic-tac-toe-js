@@ -1,0 +1,111 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "gameAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "playerX",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "playerO",
+						"type": "address"
+					}
+				],
+				"name": "GameCreated",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "createNewGame",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "deployedGames",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/TicTacToeFactory.sol": "TicTacToeFactory"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/TicTacToe.sol": {
+			"keccak256": "0xbe0f018de200ab05ce5419873474ea0649d4fcc281b12ebb31e2f2bbe84d2a30",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://89f8fe73afd8f0e1009c9f8fb52f597aeb4a842322dbfe1bd29f84f7c9e3dece",
+				"dweb:/ipfs/QmVSiF1CuQ5PhyqQmtBan2cYY84rXfKrDT2sRZqa8cSni7"
+			]
+		},
+		"contracts/TicTacToeFactory.sol": {
+			"keccak256": "0x812cc3987005aa5c70ca0a2a654938d053a7edbc0069ee3e61b3b20aa47c1684",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://6d9355a4843b43c9258ada6d5c5fef10cc4b2a2214f8d719f506968e9559c4cf",
+				"dweb:/ipfs/QmVaSDS98A9UwQ5eUVNcz2uWgcqmNoBJpydbt8khfZa4Qt"
+			]
+		}
+	},
+	"version": 1
+}
