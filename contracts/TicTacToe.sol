@@ -73,6 +73,14 @@ contract TicTacToe {
         return (playerX, playerO);
     }
 
+    function getPlayerX() public view returns (address) {
+        return playerX;
+    }
+
+    function getPlayerO() public view returns (address) {
+        return playerO;
+    }
+
     // custom get current board
     function getBoardState() public view returns (uint8[3][3] memory) {
         return board;
@@ -109,7 +117,7 @@ contract TicTacToe {
 
     // private makes it so that only function within this contract can call it
     // internal is simimlar to private, but allows inheritance, i.e. child contracts to access it, or inherited contracts
-    function switchTurn() private { 
+    function switchTurn() private {
         nextPlayer == playerX ? nextPlayer = playerO : nextPlayer = playerX;
     }
 
