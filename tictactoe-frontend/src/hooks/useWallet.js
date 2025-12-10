@@ -16,8 +16,8 @@ export function useWallet(provider) {
 
         async function connect() {
             try {
-                // get the current provider iformation
-                const currProvider = new ethers.BrowserProvider(provider.provider);
+                // get the current provider information
+                const currProvider = new ethers.BrowserProvider(provider);
                 const signer = await currProvider.getSigner();
                 const address = await signer.getAddress();
                 const contract = new ethers.Contract(TICTACTOE_ADDRESS, TICTACTOE_ABI, signer);

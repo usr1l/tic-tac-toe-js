@@ -8,7 +8,11 @@ function App() {
   const providers = useSyncProviders();
 
   const [ selectedProvider, setSelectedProvider ] = useState(null);
-  const { walletAddress, contractInstance, walletConnected } = useWallet(selectedProvider);
+  const {
+    walletAddress,
+    contractInstance,
+    walletConnected
+  } = useWallet(selectedProvider ? selectedProvider.provider : null);
 
   const handleProviderSelect = (provider) => {
     setSelectedProvider(provider);
