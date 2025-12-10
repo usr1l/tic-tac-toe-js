@@ -3,6 +3,12 @@
 pragma solidity ^0.8.0;
 
 
+// simple walkthrough:
+// create contract
+// contracts consist of data types (structs, tuples, arrs, uint, etc.), functions, events and require()
+// contracts can be initialized within other contracts, use arr for storing addresses
+// events can be created and emitted to communicate with the frontend
+
 // contracts are a class and the basic building block of solidity applications
 // bundles together state variables (data) and functions (behavior/logic) that can interact with that data
 // becomes immutable once deployed to the blockchain
@@ -29,38 +35,38 @@ contract TicTacToe {
     event MoveMade(address indexed player, uint8 r, uint8 c, uint8 marker);
     event GameEnded(address indexed winner);
 
-    // // use initialization function for initializing multiple instances of game contract, instead of the constructor here
-    // function initialize(address payable _playerX, address payable _playerO) public {
-    //     // crucial for access control check prevents function from being called more than once
-    //     // address(0) before the contract is initialized is set to 20 bytes of 0, after initializing its set to deployer address
-    //     require(playerX == address(0), "Game already initialized");
-    //     playerX = _playerX;
+    // use initialization function for initializing multiple instances of game contract, instead of the constructor here
+    function initialize(address payable _playerX, address payable _playerO) public {
+        // crucial for access control check prevents function from being called more than once
+        // address(0) before the contract is initialized is set to 20 bytes of 0, after initializing its set to deployer address
+        require(playerX == address(0), "Game already initialized");
+        playerX = _playerX;
 
-    //     require(_playerO != playerX, "Other player must use a different address");
-    //     playerO = _playerO;
-
-    //     nextPlayer = playerX;
-    //     isGameOver = false;
-
-    //     emit GameStarted(address(this), playerX, playerO);
-    // }
-
-    // CONSTRUCTOR runs only once upon deployment of the contract
-    // this constructor takes one argument, the address of playerO, underscore before the name is a common convention for function parameters
-    constructor(address payable _playerO) {
-        // msg.sender is a global variable (or builtin) that always holds the address the account or contract that initiated the current transaction
-        // think of it like this: playerX is the address that deploys the contract, the argument entered into constructor is playerO, and is passed in during the deployment
-        playerX = payable(msg.sender);
-
-        // essential security check and error handling mechanism to in Solidity
-        // REQUIRE: checks that playerX and playerO are different addresses, if not, it throws and error and reverts the transaction, gas spent is refunded
-        require(playerX != _playerO, "Player O must be a different address.");
+        require(_playerO != playerX, "Other player must use a different address");
         playerO = _playerO;
 
-        // initializes nextPlayer to playerX, meaning playerX will make the first move
         nextPlayer = playerX;
         isGameOver = false;
+
+        emit GameStarted(address(this), playerX, playerO);
     }
+
+    // // CONSTRUCTOR runs only once upon deployment of the contract
+    // // this constructor takes one argument, the address of playerO, underscore before the name is a common convention for function parameters
+    // constructor(address payable _playerO) {
+    //     // msg.sender is a global variable (or builtin) that always holds the address the account or contract that initiated the current transaction
+    //     // think of it like this: playerX is the address that deploys the contract, the argument entered into constructor is playerO, and is passed in during the deployment
+    //     playerX = payable(msg.sender);
+
+    //     // essential security check and error handling mechanism to in Solidity
+    //     // REQUIRE: checks that playerX and playerO are different addresses, if not, it throws and error and reverts the transaction, gas spent is refunded
+    //     require(playerX != _playerO, "Player O must be a different address.");
+    //     playerO = _playerO;
+
+    //     // initializes nextPlayer to playerX, meaning playerX will make the first move
+    //     nextPlayer = playerX;
+    //     isGameOver = false;
+    // }
 
     // custom getter for functions
     function getPlayers() public view returns (address, address) {
