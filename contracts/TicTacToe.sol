@@ -24,7 +24,7 @@ contract TicTacToe {
 
     // variable for tracking game winner
     address public winner;
-    
+
     event GameStarted(address indexed gameAddress, address indexed pX, address indexed pO);
     event MoveMade(address indexed player, uint8 r, uint8 c, uint8 marker);
     event GameEnded(address indexed winner);
@@ -62,7 +62,15 @@ contract TicTacToe {
     //     isGameOver = false;
     // }
 
-    
+    // custom getter for functions
+    function getPlayers() public view returns (address, address) {
+        return (playerX, playerO);
+    }
+
+    // custom get current board
+    function getBoardState() public view returns (uint8[3][3] memory) {
+        return board;
+    }
 
     // allow players to make moves
     function makeMove(uint8 row, uint8 col) public {

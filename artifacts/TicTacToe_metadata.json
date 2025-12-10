@@ -6,15 +6,73 @@
 	"output": {
 		"abi": [
 			{
+				"anonymous": false,
 				"inputs": [
 					{
-						"internalType": "address payable",
-						"name": "_playerO",
+						"indexed": true,
+						"internalType": "address",
+						"name": "winner",
 						"type": "address"
 					}
 				],
-				"stateMutability": "nonpayable",
-				"type": "constructor"
+				"name": "GameEnded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "gameAddress",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "pX",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "pO",
+						"type": "address"
+					}
+				],
+				"name": "GameStarted",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "player",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "r",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "c",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "marker",
+						"type": "uint8"
+					}
+				],
+				"name": "MoveMade",
+				"type": "event"
 			},
 			{
 				"inputs": [
@@ -38,6 +96,55 @@
 					}
 				],
 				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getBoardState",
+				"outputs": [
+					{
+						"internalType": "uint8[3][3]",
+						"name": "",
+						"type": "uint8[3][3]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getPlayers",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address payable",
+						"name": "_playerX",
+						"type": "address"
+					},
+					{
+						"internalType": "address payable",
+						"name": "_playerO",
+						"type": "address"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -86,23 +193,10 @@
 			},
 			{
 				"inputs": [],
-				"name": "playerO",
+				"name": "winner",
 				"outputs": [
 					{
-						"internalType": "address payable",
-						"name": "",
-						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "playerX",
-				"outputs": [
-					{
-						"internalType": "address payable",
+						"internalType": "address",
 						"name": "",
 						"type": "address"
 					}
@@ -139,11 +233,11 @@
 	},
 	"sources": {
 		"contracts/TicTacToe.sol": {
-			"keccak256": "0x3658b8f7e6db30eea3b7eb68e21a0576170cb091f67882f00f91dd899a9ec708",
+			"keccak256": "0xdfd2a52b4c711cb62d1eb6c44224e981576b95a28d53702443e075048d2c600b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://eeea2be6fbc79e3c0054b701c19c807a3999a4b3e00812dfe6b84800aa78d07a",
-				"dweb:/ipfs/QmVSs7Fx9CJZoo8DsY1CMSVYhgVQ4hSoxViA4rWnzKrD5u"
+				"bzz-raw://03d35e5f1389dcc4fce76a625a9254151de3565c0f77c2552e4ea61db8f269da",
+				"dweb:/ipfs/QmTFZuEAoVxPJWiZC1hkrVRqbRzEnvJuHQ1UzNs15zjCKn"
 			]
 		}
 	},
