@@ -53,7 +53,7 @@ function Board({}) {
     );
 }
 
-export default function Game({ walletAddress, contractInstance, walletConnected }) {
+export default function Game({ walletAddress, providerInstance, factoryContract, walletConnected }) {
     return (
         <div className="game">
             <h1>TIC TAC TOE</h1>

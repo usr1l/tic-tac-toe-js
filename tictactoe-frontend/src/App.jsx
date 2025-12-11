@@ -10,8 +10,9 @@ function App() {
   const [ selectedProvider, setSelectedProvider ] = useState(null);
   const {
     walletAddress,
-    contractInstance,
-    walletConnected
+    factoryContract,
+    walletConnected,
+    providerInstance
   } = useWallet(selectedProvider ? selectedProvider.provider : null);
 
   const handleProviderSelect = (provider) => {
@@ -46,7 +47,8 @@ function App() {
       </div>
       <Game
         walletAddress={walletAddress}
-        contractInstance={contractInstance}
+        factoryContract={factoryContract}
+        providerInstance={providerInstance}
         walletConnected={walletConnected}
       />
     </div>
