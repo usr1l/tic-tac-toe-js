@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { timeStamp } = require('console');
 
 const PORT = 5000;
-const REACT_ORIGIN = "http://localhost:3000";
+const REACT_ORIGIN = "http://localhost:5173";
 const isProduction = process.env.NODE_ENV === "production";
 const rooms = {};
 

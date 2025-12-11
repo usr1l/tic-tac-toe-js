@@ -1,6 +1,6 @@
 import { useSyncProviders } from './hooks/useSyncProvider.js';
 import Game from './components/Game/Game.jsx';
-import { useWallet } from './hooks/useWallet.js';
+import useWallet from './hooks/useWallet.js';
 import { useState } from 'react';
 import './App.css';
 

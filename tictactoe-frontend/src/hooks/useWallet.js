@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
-import { TICTACTOE_ABI, TICTACTOEFACTORY_ADDRESS } from "../config.js";
+import { TICTACTOEFACTORY_ABI, TICTACTOEFACTORY_ADDRESS } from "../config.js";
 import { useEffect, useState } from "react";
 
-export function useWallet(provider) {
+export default function useWallet(provider) {
     const [ walletAddress, setWalletAddress ] = useState("");
     const [ contractInstance, setContractInstance ] = useState(null);
 
@@ -20,7 +20,7 @@ export function useWallet(provider) {
                 const currProvider = new ethers.BrowserProvider(provider);
                 const signer = await currProvider.getSigner();
                 const address = await signer.getAddress();
-                const contract = new ethers.Contract(TICTACTOE_ADDRESS, TICTACTOE_ABI, signer);
+                const contract = new ethers.Contract(TICTACTOEFACTORY_ADDRESS, TICTACTOEFACTORY_ABI, signer);
 
                 setWalletAddress(address);
                 setContractInstance(contract);
@@ -37,5 +37,4 @@ export function useWallet(provider) {
         contractInstance,
         walletConnected: !!contractInstance
     }
-
 }
