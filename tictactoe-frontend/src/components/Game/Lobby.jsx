@@ -7,7 +7,7 @@ export default function Lobby({ provider }) {
     const { walletAddress, factoryContract, signer, walletConnected } = useWallet();
 
     const [ socket, setSocket ] = useState(null);
-    const [ creatorAddress, setCreatorAddres ] = useState(null);
+    const [ creatorAddress, setCreatorAddress ] = useState(null);
     const [ roomId, setRoomId ] = useState(null);
     const [ opponentAddress, setOpponentAddress ] = useState(null);
 
@@ -29,7 +29,21 @@ export default function Lobby({ provider }) {
     }, [ walletAddress, creatorAddress ]);
 
     useEffect(() => {
-        if (!walletConnected) return;
+        if (!walletConnected) {
+            setGameStatus('LOBBY');
+            setRoomId(null);
+            setCreatorAddress(null);
+            setOpponentAddress(null);
+
+            if (socket) {
+                socket.close();
+                setSocket(null);
+                addChatMessage({ sender: 'SYSTEM', message: "Wallet disconnected, lobby has been cleared", timestamp: Date.now() });
+            };
+
+            return;
+
+        };
 
         const newSocket = io(SOCKET_SERVER_URL);
         setSocket(newSocket);
@@ -46,7 +60,7 @@ export default function Lobby({ provider }) {
         newSocket.on('roomCreated', data => {
             const { roomId, creator } = data;
             setRoomId(roomId);
-            setCreatorAddres(creator);
+            setCreatorAddress(creator);
             setGameStatus('WAITING');
         });
 
@@ -64,5 +78,10 @@ export default function Lobby({ provider }) {
             const { message } = data;
             alert(message);
         })
-    });
+
+        return () => newSocket.close();
+        // usecallback for setChatHistory gives us a custom setter for better readibility, add the variables defined outside useffect into the dependency array
+    }, [ walletConnected, addChatMessage ]);
+
+    return <div>Lobby Loaded. Wallet: {walletAddress}</div>
 }
