@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { TICTACTOE_ABI, TICTACTOE_ADDRESS } from "../config.js";
+import { TICTACTOE_ABI, TICTACTOEFACTORY_ADDRESS } from "../config.js";
 import { useEffect, useState } from "react";
 
 export function useWallet(provider) {
