@@ -25,6 +25,44 @@ export default function Lobby({ provider }) {
     const isCreator = useMemo(() => {
         if (!walletAddress || !roomId || !factoryContract) return false;
 
-        return gameStatus !== 'LOBBY' && walletAddress === factoryContract.signer.getAddress();
+        return gameStatus !== 'LOBBY' && walletAddress.toLowerCase() === creatorAddress.toLowerCase();
+    }, [ walletAddress, creatorAddress ]);
+
+    useEffect(() => {
+        if (!walletConnected) return;
+
+        const newSocket = io(SOCKET_SERVER_URL);
+        setSocket(newSocket);
+
+        newSocket.on('connect', () => {
+            console.log("Connected to Server:", newSocket.id);
+        });
+
+
+        newSocket.on('announcement', data => {
+            addChatMessage(data);
+        });
+
+        newSocket.on('roomCreated', data => {
+            const { roomId, creator } = data;
+            setRoomId(roomId);
+            setCreatorAddres(creator);
+            setGameStatus('WAITING');
+        });
+
+        newSocket.on('opponentJoinedRoom', data => {
+            const { joiner } = data;
+            setOpponentAddress(joiner);
+            setGameStatus('READY');
+        });
+
+        newSocket.on('newMessage', data => {
+            addChatMessage(data);
+        });
+
+        newSocket.on('joinError', data => {
+            const { message } = data;
+            alert(message);
+        })
     });
 }
