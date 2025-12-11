@@ -140,6 +140,7 @@ function handleChatMessage(socket, data) {
     io.to(roomId).emit('newMessage', {
         sender: sender,
         message: message,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        isCreator: sender.toLowerCase() === rooms[ roomId ].creator.toLowerCase()
     })
 }

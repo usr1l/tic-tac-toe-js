@@ -59,6 +59,7 @@ export default function useWallet(provider) {
         walletAddress,
         factoryContract,
         providerInstance,
+        signer,
         walletConnected: !!contractInstance
     }
 }
