@@ -35,6 +35,17 @@ const io = new Server(server, {
     }
 });
 
+io.on('connection', socket => {
+    socket.on('createRoom', data => handleCreateRoom(socket, data));
+    socket.on('joinRoom', data => handleJoinRoom(socket, data));
+    socket.on('startGame', data => handleStartGame(socket, data));
+    socket.on('chatMessage', data => handleChatMessage(socket, data));
+
+    socket.on('disconnect', () => {
+        // for later
+    })
+})
+
 // Error formatter
 app.use((err, _req, res, _next) => {
     res.status(err.status || 500);
@@ -53,8 +64,12 @@ app.get('/', (req, res) => {
     res.send("TicTacToe lobby connected.");
 });
 
+server.listen(PORT, () => {
+    console.log(`Lobby server listening on ${PORT}`);
+});
+
 app.listen(PORT, () => {
-    console.log(`Lobby server listening on port ${PORT}`);
+    console.log(`Lobby socketIo server listening on port ${PORT}`);
 });
 
 function handleCreateRoom(socket, data) {
@@ -62,9 +77,13 @@ function handleCreateRoom(socket, data) {
     const { userAddress } = data;
 
     rooms[ roomId ] = {
+        // person who created the room
         creator: userAddress,
+        // opponent
         joiner: null,
+        // game creation status
         status: 'WAITING',
+        //
         creatorSocketId: socket.id,
         joinerSocketId: null,
         gameContractAddress: null
@@ -72,7 +91,7 @@ function handleCreateRoom(socket, data) {
 
     socket.join(roomId);
     socket.emit('roomCreated', { roomId, creator: userAddress });
-    const message = `[SYSTEM]: Room ${roomId} created. Waiting for opponent to join`;
+    const message = `[SYSTEM]: Room ${roomId} created. Waiting for opponent to join...`;
 
     io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timestamp: Date.now() });
 }
@@ -96,12 +115,12 @@ function handleJoinRoom(socket, data) {
     io.to(roomId).emit('announcement', { sender: 'SYSTEM', messgae: announcement, timestamp: Date.now() });
 }
 
-function handleGameStart(socket, data) {
+function handleStartGame(socket, data) {
     const { roomId } = data;
     const room = rooms[ roomId ];
 
     if (!room || room.status !== 'READY' || socket.id !== room.creatorSocketId) {
-        return socket.emit('error', { message: 'Requirements not met to start game.' });
+        return socket.emit('error', { message: 'Not authorized to start the game.' });
     };
 
     room.status = 'PENDING';
@@ -113,7 +132,14 @@ function handleChatMessage(socket, data) {
     const { roomId, sender, message } = data;
     if (!rooms[ roomId ]) return;
 
+    // check for if sender is in the room
     if (socket.id !== rooms[ roomId ].creatorSocketId && socket.id !== rooms[ roomId ].joinerSocketId) {
         return;
     }
+
+    io.to(roomId).emit('newMessage', {
+        sender: sender,
+        message: message,
+        timestamp: Date.now()
+    })
 }
