@@ -1,43 +1,18 @@
-import { useState, useContext, createContext, useEffect } from "react";
+import useWallet from "../hooks/useWallet";
+import { WalletProviderContext } from "./useWalletProvider";
 
-
-const WalletProviderContext = createContext(null);
-console.log(WalletProviderContext, "this")
-
-export function WalletProvider({ children }) {
-    const [ walletAddress, setWalletAddress ] = useState("");
-    const [ signer, setSigner ] = useState(null);
-    const [ factoryContract, setFactoryContract ] = useState(null);
-    const [ allProviders, setAllProviders ] = useState(null);
-    const [ currSelectedProvider, setCurrSelectedProvider ] = useState(null);
-
-
-    useEffect(() => {
-        // if (!selectedProvider) {
-        //     setWalletAddress("");
-        //     setFactoryContract(null);
-        //     setSigner(null);
-        //     return;
-        // };
-
-        console.log(currSelectedProvider)
-    }, [ currSelectedProvider ]);
+export default function WalletProvider({ children, selectedProvider }) {
+    const { walletAddress, signer, factoryContract, walletConnected } = useWallet(selectedProvider ? selectedProvider : null);
 
     const contextValue = {
-        // walletAddress,
-        // signer,
-        // factoryContract,
-        // allProviders,
-        setCurrSelectedProvider,
-        // walletConnected: !!walletAddress,
-        // setAllProviders,
+        walletAddress,
+        signer,
+        factoryContract,
+        walletConnected
     }
-
     return (
         <WalletProviderContext.Provider value={contextValue}>
             {children}
         </WalletProviderContext.Provider>
     )
 };
-
-export const useWalletProvider = () => useContext(WalletProviderContext);

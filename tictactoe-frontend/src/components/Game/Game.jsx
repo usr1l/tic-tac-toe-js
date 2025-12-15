@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Square from "./Square";
 import Lobby from "./Lobby";
 import "./Game.css";
-import { useWalletProvider } from "../../context/Wallet";
+import { useWalletProvider } from "../../context/useWalletProvider";
 
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(null));
 const PLAYER_X = "X";
@@ -54,30 +54,27 @@ function Board({}) {
     )
 }
 
-export default function Game(selectedProvider) {
-    const { setCurrSelectedProvider } = useWalletProvider();
-    useEffect(() => {
-        if (selectedProvider) setCurrSelectedProvider(selectedProvider)
-    }, [ selectedProvider ])
+export default function Game() {
+    const { walletAddress, signer, factoryContract, walletConnected } = useWalletProvider();
     return (
         <div className="lobby-container">
             <div className="game">
                 <h1>TIC TAC TOE</h1>
                 <div>
-                    {/* <div>Player 1: {walletAddress.slice(0, 8)}...</div> */}
+                    <div>Player 1: {walletAddress.slice(0, 8)}...</div>
                 </div>
-                {/* {walletConnected ? (
+                {walletConnected ? (
                     <Board />
                 ) : (
                     <div>Select a wallet from above</div>
-                )} */}
+                )}
             </div>
-            {/* <Lobby
+            <Lobby
                 walletAddress={walletAddress}
                 signer={signer}
                 factoryContract={factoryContract}
                 walletConnected={walletConnected}
-            /> */}
+            />
         </div>
     );
 }

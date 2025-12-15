@@ -1,33 +1,25 @@
 import { ethers } from "ethers";
 import { TICTACTOEFACTORY_ABI, TICTACTOEFACTORY_ADDRESS } from "../config.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function useWallet(provider) {
     const [ walletAddress, setWalletAddress ] = useState("");
     const [ signer, setSigner ] = useState(null);
     const [ factoryContract, setFactoryContract ] = useState(null);
 
-    const providerRef = useRef(null);
 
     useEffect(() => {
 
         if (!provider) {
             setWalletAddress("");
             setFactoryContract(null);
-            providerRef.current = null;
             setSigner(null);
             return;
         };
 
         async function connect() {
             try {
-                let currProvider;
-                if (!providerRef.current) {
-
-                    // get the current provider information
-                    currProvider = new ethers.BrowserProvider(provider);
-                    providerRef.current = currProvider;
-                }
+                const currProvider = new ethers.BrowserProvider(provider);
                 const signer = await currProvider.getSigner();
                 const address = await signer.getAddress();
                 const contract = new ethers.Contract(TICTACTOEFACTORY_ADDRESS, TICTACTOEFACTORY_ABI, signer);
