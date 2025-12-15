@@ -1,0 +1,15 @@
+.chat-container {
+    height: 400px;
+    width: 400px;
+}
+
+/* .chat-header {} */
+
+.chat-window {
+    border: solid 3px white;
+    height: 350px;
+    width: 380px;
+
+}
+
+/* .input-field {} */

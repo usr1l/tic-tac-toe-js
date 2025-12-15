@@ -1,23 +1,30 @@
+import { useEffect, useState } from 'react';
 import { useSyncProviders } from './hooks/useSyncProvider.js';
+import { useWalletProvider, WalletProvider } from './context/Wallet.jsx';
 import Game from './components/Game/Game.jsx';
-import useWallet from './hooks/useWallet.js';
-import { useState } from 'react';
 import './App.css';
 
 function App() {
   const providers = useSyncProviders();
-
   const [ selectedProvider, setSelectedProvider ] = useState(null);
-  const {
-    walletAddress,
-    factoryContract,
-    walletConnected,
-    providerInstance
-  } = useWallet(selectedProvider ? selectedProvider.provider : null);
+  // const [ isLoaded, setIsLoaded ] = useState()
+
+
 
   const handleProviderSelect = (provider) => {
-    setSelectedProvider(provider);
+    setSelectedProvider(provider.provider);
   }
+
+
+
+  // useEffect(() => {
+  //   if (!isLoaded) return;
+  //   setCurrSelectedProvider(selectedProvider ? selectedProvider.provider : null)
+  // }, [ selectedProvider ])
+  // useEffect(() => {
+  //   if (selectedProvider) setCurrSelectedProvider(selectedProvider);
+
+  // }, [ selectedProvider ])
 
   // another way:
   // const handleConnect = async (providerWithInfo) => {
@@ -46,10 +53,11 @@ function App() {
         )}
       </div>
       <Game
-        walletAddress={walletAddress}
-        factoryContract={factoryContract}
-        providerInstance={providerInstance}
-        walletConnected={walletConnected}
+        selectedProvider={selectedProvider}
+      // walletAddress={walletAddress}
+      // factoryContract={factoryContract}
+      // walletConnected={walletConnected}
+      // signer={signer}
       />
     </div>
   )

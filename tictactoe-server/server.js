@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
-const { timeStamp } = require('console');
 
 const PORT = 5000;
 const REACT_ORIGIN = "http://localhost:5173";
