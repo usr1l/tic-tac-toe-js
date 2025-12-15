@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import "./Chat.css";
+import { useWalletProvider } from '../../context/useWalletProvider';
 
 const SOCKET_SERVER_URL = "http://localhost:5173";
 
-export default function Lobby({ walletAddress, factoryContract, walletConnected }) {
+export default function Lobby() {
+    const { walletAddress, factoryContract, walletConnected } = useWalletProvider();
+
     const [ isLoaded, setIsLoaded ] = useState(false);
     const [ socket, setSocket ] = useState(null);
     const [ creatorAddress, setCreatorAddress ] = useState(null);
@@ -17,11 +20,10 @@ export default function Lobby({ walletAddress, factoryContract, walletConnected 
     const [ chatMessage, setChatMessage ] = useState('');
     const [ chatHistory, setChatHistory ] = useState([]);
 
-    // console.log(chatHistory)
-
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
-        setChatHistory([ ...chatHistory, messageObj ]);
+        console.log(chatHistory)
+        setChatHistory(prev => [ ...prev, messageObj ]);
     }, []);
 
     const isCreator = useMemo(() => {
@@ -30,18 +32,16 @@ export default function Lobby({ walletAddress, factoryContract, walletConnected 
         return gameStatus !== 'LOBBY' && walletAddress.toLowerCase() === creatorAddress.toLowerCase();
     }, [ walletAddress, creatorAddress ]);
 
+    const handleSend = (e) => {
+        e.preventDefault();
+        addChatMessage({ sender: walletAddress, message: chatMessage, timestamp: Date.now() });
+        setChatMessage("");
+    };
 
     useEffect(() => {
         if (!socket) return;
         setIsLoaded(true)
-    }, [ socket, addChatMessage ]);
-
-    // useEffect(() => {
-    //     if (socket && isLoaded && !walletConnected) {
-    //         addChatMessage({ sender: 'SYSTEM', message: "No wallet connected", timestamp: Date.now() });
-    //     }
-    // }, [ addChatMessage, socket, isLoaded, walletConnected ])
-
+    }, [ socket ]);
 
     useEffect(() => {
         if (!walletConnected && isLoaded) {
@@ -58,8 +58,7 @@ export default function Lobby({ walletAddress, factoryContract, walletConnected 
     }, [ walletConnected, addChatMessage, isLoaded ]);
 
     useEffect(() => {
-        if (walletConnected) addChatMessage({ sender: 'SYSTEM', message: `Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
-
+        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
     }, [ walletConnected ]);
 
     useEffect(() => {
@@ -96,7 +95,10 @@ export default function Lobby({ walletAddress, factoryContract, walletConnected 
             alert(message);
         })
 
-        return () => newSocket.close();
+        return () => {
+            setSocket(null);
+            newSocket.close()
+        };
         // usecallback for setChatHistory gives us a custom setter for better readibility, add the variables defined outside useffect into the dependency array
     }, [ addChatMessage ]);
 
@@ -119,9 +121,16 @@ export default function Lobby({ walletAddress, factoryContract, walletConnected 
                                 placeholder='Type a message here...'
                                 onChange={e => setChatMessage(e.target.value)}
                             ></input>
-                            <button>Send</button>
+                            <button onClick={handleSend}>Send</button>
                         </form>
                     </div>
+                    {walletConnected && (
+                        <div>
+                            <button>Create Room</button>
+                            <button>Join Room</button>
+                            {/* <button className="restart" onClick={restart} >Restart</button> */}
+                        </div>
+                    )}
                 </div>
             )}
         </>

@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import Square from "./Square";
 import Lobby from "./Lobby";
-import "./Game.css";
 import { useWalletProvider } from "../../context/useWalletProvider";
+import "./Game.css";
 
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(null));
 const PLAYER_X = "X";
 const PLAYER_O = "O";
 
 
-function Board({}) {
+function Board() {
     const [ board, setBoard ] = useState(BOARD);
     const [ turn, setTurn ] = useState(PLAYER_X);
     const [ errMessage, setErrMessage ] = useState("");
@@ -49,7 +49,6 @@ function Board({}) {
                     ))}
                 </div>
             ))}
-            <button className="restart" onClick={restart} >Restart</button>
         </div>
     )
 }
@@ -69,12 +68,7 @@ export default function Game() {
                     <div>Select a wallet from above</div>
                 )}
             </div>
-            <Lobby
-                walletAddress={walletAddress}
-                signer={signer}
-                factoryContract={factoryContract}
-                walletConnected={walletConnected}
-            />
+            <Lobby />
         </div>
     );
 }
