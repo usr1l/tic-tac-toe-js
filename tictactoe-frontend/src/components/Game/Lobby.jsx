@@ -14,6 +14,7 @@ export default function Lobby() {
     const [ creatorAddress, setCreatorAddress ] = useState(null);
     const [ roomId, setRoomId ] = useState(null);
     const [ opponentAddress, setOpponentAddress ] = useState(null);
+    const [ gameAddress, setGameAddress ] = useState(null);
 
     // 'LOBBY', 'WAITING', 'READY', 'PENDING', 'ACTIVE'
     const [ gameStatus, setGameStatus ] = useState('LOBBY');
@@ -64,19 +65,6 @@ export default function Lobby() {
             const tx = await factoryContract.createNewGame(opponentAddress);
             // wait for mining
             const receipt = await tx.wait();
-            console.log(receipt)
-        } catch (e) {
-            console.log("error: ", e)
-        };
-    };
-
-    const handleTest = async () => {
-        e.preventDefault();
-        try {
-            // call the function
-            const tx = await factoryContract.createNewGame(opponentAddress);
-            // wait for mining
-            const receipt = await tx.wait();
             // extract the deployed contract address from the gamecreated event
             const factoryInterface = factoryContract.interface;
             // find the game created event
@@ -90,14 +78,15 @@ export default function Lobby() {
 
             if (!gameCreatedEvent) throw new Error("Could not find the GameCreated event");
 
+            // extract the newly created game address
             const newGameAddress = gameCreatedEvent.args[ 0 ];
-
-
-            console.log(newGameAddress)
+            // socket.emit()
         } catch (e) {
-            console.log("error: ", e)
+            console.error("Game Start Error:", error);
+            socket.emit('deployFail', { roomId })
         };
-    }
+    };
+
 
     useEffect(() => {
         if (!socket) return;
@@ -159,6 +148,11 @@ export default function Lobby() {
             alert(message);
         })
 
+        newSocket.on('deployFail', data => {
+            addChatMessage(data);
+            setGameStatus('READY');
+        });
+
         return () => {
             setSocket(null);
             newSocket.close()
@@ -210,7 +204,7 @@ export default function Lobby() {
                             )}
                             {gameStatus === 'PENDING' && (
                                 <>
-                                    <button disabled={creatorAddress !== walletAddress} onClick={handleTest}>Game is starting ...</button>
+                                    <button disabled={creatorAddress !== walletAddress} onClick={handleStartGame}>Game is starting ...</button>
                                 </>
                             )}
                         </div>

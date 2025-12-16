@@ -42,6 +42,7 @@ io.on('connection', socket => {
     socket.on('joinRoom', data => handleJoinRoom(socket, data));
     socket.on('startGame', data => handleStartGame(socket, data));
     socket.on('chatMessage', data => handleChatMessage(socket, data));
+    socket.on('deployFail', data => handleDeployFail(socket, data));
 
     // socket.on('disconnect', () => {
     //     // for later
@@ -149,3 +150,17 @@ function handleChatMessage(socket, data) {
         timestamp: Date.now(),
     })
 }
+
+function handleDeployFail(socket, data) {
+    const { roomId } = data;
+    if (socket.id !== rooms[ roomId ].creatorSocketId && socket.id !== rooms[ roomId ].joinerSocketId) {
+        return;
+    };
+
+    io.to(roomId).emit('deployFail', {
+        sender: '[SYSTEM]',
+        message: "[ERROR]: Contract deployment failed. Please try again.",
+        timestamp: Date.now()
+    });
+
+};
