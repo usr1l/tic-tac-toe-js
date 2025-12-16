@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { io } from 'socket.io-client';
-import "./Chat.css";
 import { useWalletProvider } from '../../context/useWalletProvider';
-
+import Game from './Game';
+import "./Chat.css";
 
 const SOCKET_SERVER_URL = "http://localhost:5001";
 
@@ -80,16 +80,21 @@ export default function Lobby() {
 
             // extract the newly created game address
             const newGameAddress = gameCreatedEvent.args[ 0 ];
-            // socket.emit()
+            socket.emit('deploySuccess', { roomId, newGameAddress });
         } catch (e) {
             console.error("Game Start Error:", error);
             socket.emit('deployFail', { roomId })
         };
     };
 
+    const handleMakeMove = async e => {
+        e.preventDefault();
+
+    };
+
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) (setIsLoaded(false));
         setIsLoaded(true);
     }, [ socket ]);
 
@@ -99,6 +104,7 @@ export default function Lobby() {
             setRoomId(null);
             setCreatorAddress(null);
             setOpponentAddress(null);
+            setGameAddress(null);
             addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: No wallet connected.', timestamp: Date.now() });
 
             return;
@@ -153,6 +159,15 @@ export default function Lobby() {
             setGameStatus('READY');
         });
 
+        newSocket.on('deploySuccess', data => {
+
+            const { message, newGameAddress } = data;
+            console.log(message, newGameAddress)
+            setGameAddress(newGameAddress);
+            setGameStatus('ACTIVE');
+            addChatMessage(message);
+        })
+
         return () => {
             setSocket(null);
             newSocket.close()
@@ -162,6 +177,9 @@ export default function Lobby() {
 
     return (
         <>
+            {gameAddress && (
+                <Game />
+            )}
             {isLoaded && (
                 <div className='chat-container'>
                     <div className='chat-header'>Game Chat</div>
@@ -204,13 +222,14 @@ export default function Lobby() {
                             )}
                             {gameStatus === 'PENDING' && (
                                 <>
-                                    <button disabled={creatorAddress !== walletAddress} onClick={handleStartGame}>Game is starting ...</button>
+                                    <button disabled={creatorAddress !== walletAddress}>Game is starting ...</button>
                                 </>
                             )}
                         </div>
                     )}
                 </div>
             )}
+
         </>
     );
 }

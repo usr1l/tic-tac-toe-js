@@ -68,7 +68,6 @@ export default function Game() {
                     <div>Select a wallet from above</div>
                 )}
             </div>
-            <Lobby />
         </div>
     );
 }

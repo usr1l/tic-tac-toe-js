@@ -32,42 +32,41 @@ const io = new Server(server, {
     cors: {
         origin: REACT_ORIGIN,
         methods: [ "GET", "POST" ],
-        // credentials: true
     }
 });
 
 io.on('connection', socket => {
-    // console.log("User connected:")
     socket.on('createRoom', data => handleCreateRoom(socket, data));
     socket.on('joinRoom', data => handleJoinRoom(socket, data));
     socket.on('startGame', data => handleStartGame(socket, data));
     socket.on('chatMessage', data => handleChatMessage(socket, data));
     socket.on('deployFail', data => handleDeployFail(socket, data));
+    socket.on('deploySuccess', data => handleDeploySuccess(socket, data));
 
     // socket.on('disconnect', () => {
     //     // for later
     // })
 })
 
-// Error formatter
-app.use((err, _req, res, _next) => {
-    res.status(err.status || 500);
-    console.error(err);
-    res.json({
-        // title: err.title || 'Server Error',
-        message: err.message,
-        statusCode: err.status,
-        errors: err.errors,
-        stack: isProduction ? null : err.stack
-    });
-});
+// // Error formatter
+// app.use((err, _req, res, _next) => {
+//     res.status(err.status || 500);
+//     console.error(err);
+//     res.json({
+//         // title: err.title || 'Server Error',
+//         message: err.message,
+//         statusCode: err.status,
+//         errors: err.errors,
+//         stack: isProduction ? null : err.stack
+//     });
+// });
 
 
-app.get('/', (req, res) => {
-    // res.send("TicTacToe lobby connected.");
-    console.log("this prints")
+// app.get('/', (req, res) => {
+//     // res.send("TicTacToe lobby connected.");
+//     console.log("this prints")
 
-});
+// });
 
 server.listen(PORT, () => {
     console.log(`Lobby server listening on ${PORT}`);
@@ -163,4 +162,21 @@ function handleDeployFail(socket, data) {
         timestamp: Date.now()
     });
 
+};
+
+function handleDeploySuccess(socket, data) {
+    const { roomId, newGameAddress } = data;
+    rooms[ roomId ].gameContractAddress = newGameAddress;
+
+    io.to(roomId).emit('deploySuccess',
+        data = {
+            message: {
+
+                sender: 'SYSTEM',
+                message: `[SYSTEM]: Contract deployment success, game has started ...`,
+                timestamp: Date.now()
+            },
+            newGameAddress
+        }
+    )
 };
