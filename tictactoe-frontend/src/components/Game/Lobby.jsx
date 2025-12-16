@@ -3,11 +3,13 @@ import { io } from 'socket.io-client';
 import { useWalletProvider } from '../../context/useWalletProvider';
 import Game from './Game';
 import "./Chat.css";
+import { ethers } from 'ethers';
+import { TICTACTOE_ABI } from '../../config';
 
 const SOCKET_SERVER_URL = "http://localhost:5001";
 
 export default function Lobby() {
-    const { walletAddress, factoryContract, walletConnected } = useWalletProvider();
+    const { walletAddress, factoryContract, walletConnected, signer } = useWalletProvider();
 
     const [ isLoaded, setIsLoaded ] = useState(false);
     const [ socket, setSocket ] = useState(null);
@@ -15,6 +17,7 @@ export default function Lobby() {
     const [ roomId, setRoomId ] = useState(null);
     const [ opponentAddress, setOpponentAddress ] = useState(null);
     const [ gameAddress, setGameAddress ] = useState(null);
+    const [ gameContract, setGameContract ] = useState(null);
 
     // 'LOBBY', 'WAITING', 'READY', 'PENDING', 'ACTIVE'
     const [ gameStatus, setGameStatus ] = useState('LOBBY');
@@ -79,6 +82,7 @@ export default function Lobby() {
             if (!gameCreatedEvent) throw new Error("Could not find the GameCreated event");
 
             // extract the newly created game address
+
             const newGameAddress = gameCreatedEvent.args[ 0 ];
             socket.emit('deploySuccess', { roomId, newGameAddress });
         } catch (e) {
@@ -87,11 +91,9 @@ export default function Lobby() {
         };
     };
 
-    const handleMakeMove = async e => {
-        e.preventDefault();
-
+    const handleMakeMove = async (r, c) => {
+        console.log(r, c)
     };
-
 
     useEffect(() => {
         if (!socket) (setIsLoaded(false));
@@ -159,10 +161,16 @@ export default function Lobby() {
             setGameStatus('READY');
         });
 
-        newSocket.on('deploySuccess', data => {
+        newSocket.on('deploySuccess', async data => {
 
             const { message, newGameAddress } = data;
-            console.log(message, newGameAddress)
+
+            try {
+                const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signer)
+            } catch (e) {
+
+            };
+
             setGameAddress(newGameAddress);
             setGameStatus('ACTIVE');
             addChatMessage(message);
@@ -177,9 +185,9 @@ export default function Lobby() {
 
     return (
         <>
-            {gameAddress && (
-                <Game />
-            )}
+            {/* {gameAddress && ( */}
+            <Game handleMakeMove={handleMakeMove} />
+            {/* )} */}
             {isLoaded && (
                 <div className='chat-container'>
                     <div className='chat-header'>Game Chat</div>

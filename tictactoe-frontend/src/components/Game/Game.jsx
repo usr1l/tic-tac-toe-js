@@ -9,29 +9,31 @@ const PLAYER_X = "X";
 const PLAYER_O = "O";
 
 
-function Board() {
+function Board({ handleMakeMove }) {
     const [ board, setBoard ] = useState(BOARD);
     const [ turn, setTurn ] = useState(PLAYER_X);
     const [ errMessage, setErrMessage ] = useState("");
 
-    const handleTileClick = (r, c) => {
+    const handleTileClick = async (e, r, c) => {
+        e.preventDefault();
         const newBoard = board.map(row => [ ...row ]);
         if (newBoard[ r ][ c ] !== null) {
             setErrMessage("Space is already taken.");
             return;
         }
 
+        try {
+            await handleMakeMove(r, c);
+
+        } catch (e) {
+            console.log('error: ', e);
+        };
+
         newBoard[ r ][ c ] = turn;
         setBoard(newBoard);
         setErrMessage("");
         turn === PLAYER_X ? setTurn(PLAYER_O) : setTurn(PLAYER_X);
         return;
-    }
-
-    const restart = () => {
-        setBoard(BOARD);
-        setTurn(PLAYER_X);
-        setErrMessage("");
     }
 
     return (
@@ -44,7 +46,7 @@ function Board() {
                         <Square
                             key={`space[${i}][${j}]`}
                             value={board[ i ][ j ]}
-                            handleTileClick={() => handleTileClick(i, j)}
+                            handleTileClick={(e) => handleTileClick(e, i, j)}
                         />
                     ))}
                 </div>
@@ -53,7 +55,7 @@ function Board() {
     )
 }
 
-export default function Game() {
+export default function Game({ handleMakeMove }) {
     const { walletAddress, signer, factoryContract, walletConnected } = useWalletProvider();
     return (
         <div className="lobby-container">
@@ -63,7 +65,7 @@ export default function Game() {
                     <div>Player 1: {walletAddress.slice(0, 8)}...</div>
                 </div>
                 {walletConnected ? (
-                    <Board />
+                    <Board handleMakeMove={handleMakeMove} />
                 ) : (
                     <div>Select a wallet from above</div>
                 )}
