@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Square from "./Square";
-// import useEIP6963Providers from "../../hooks/"
+import Lobby from "./Lobby";
+import { useWalletProvider } from "../../context/useWalletProvider";
 import "./Game.css";
 
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(null));
@@ -8,7 +9,7 @@ const PLAYER_X = "X";
 const PLAYER_O = "O";
 
 
-function Board({}) {
+function Board() {
     const [ board, setBoard ] = useState(BOARD);
     const [ turn, setTurn ] = useState(PLAYER_X);
     const [ errMessage, setErrMessage ] = useState("");
@@ -48,23 +49,26 @@ function Board({}) {
                     ))}
                 </div>
             ))}
-            <button className="restart" onClick={restart} >Restart</button>
         </div>
-    );
+    )
 }
 
-export default function Game({ walletAddress, contractInstance, walletConnected }) {
+export default function Game() {
+    const { walletAddress, signer, factoryContract, walletConnected } = useWalletProvider();
     return (
-        <div className="game">
-            <h1>TIC TAC TOE</h1>
-            <div>
-                <div>Player 1: {walletAddress.slice(0, 8)}...</div>
+        <div className="lobby-container">
+            <div className="game">
+                <h1>TIC TAC TOE</h1>
+                <div>
+                    <div>Player 1: {walletAddress.slice(0, 8)}...</div>
+                </div>
+                {walletConnected ? (
+                    <Board />
+                ) : (
+                    <div>Select a wallet from above</div>
+                )}
             </div>
-            {walletConnected ? (
-                <Board />
-            ) : (
-                <div>Select a wallet from above</div>
-            )}
+            <Lobby />
         </div>
     );
 }

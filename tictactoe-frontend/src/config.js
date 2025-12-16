@@ -1,16 +1,74 @@
-export const TICTACTOE_ADDRESS = "0xC914B92C2D03425D05841a38c3Fb0D4d293Ef939";
+export const TICTACTOEFACTORY_ADDRESS = "0x341544A8d14883351255b2c42889e7E3E6003453";
 
 export const TICTACTOE_ABI = [
     {
+        "anonymous": false,
         "inputs": [
             {
-                "internalType": "address payable",
-                "name": "_playerO",
+                "indexed": true,
+                "internalType": "address",
+                "name": "winner",
                 "type": "address"
             }
         ],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
+        "name": "GameEnded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "gameAddress",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "pX",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "pO",
+                "type": "address"
+            }
+        ],
+        "name": "GameStarted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "player",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "r",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "c",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "marker",
+                "type": "uint8"
+            }
+        ],
+        "name": "MoveMade",
+        "type": "event"
     },
     {
         "inputs": [
@@ -34,6 +92,81 @@ export const TICTACTOE_ABI = [
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getBoardState",
+        "outputs": [
+            {
+                "internalType": "uint8[3][3]",
+                "name": "",
+                "type": "uint8[3][3]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getPlayerO",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getPlayerX",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getPlayers",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            },
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address payable",
+                "name": "_playerX",
+                "type": "address"
+            },
+            {
+                "internalType": "address payable",
+                "name": "_playerO",
+                "type": "address"
+            }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -82,23 +215,70 @@ export const TICTACTOE_ABI = [
     },
     {
         "inputs": [],
-        "name": "playerO",
+        "name": "winner",
         "outputs": [
             {
-                "internalType": "address payable",
+                "internalType": "address",
                 "name": "",
                 "type": "address"
             }
         ],
         "stateMutability": "view",
         "type": "function"
+    }
+]
+
+export const TICTACTOEFACTORY_ABI = [
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "gameAddress",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "playerX",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "playerO",
+                "type": "address"
+            }
+        ],
+        "name": "GameCreated",
+        "type": "event"
     },
     {
-        "inputs": [],
-        "name": "playerX",
-        "outputs": [
+        "inputs": [
             {
                 "internalType": "address payable",
+                "name": "_playerO",
+                "type": "address"
+            }
+        ],
+        "name": "createNewGame",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "deployedGames",
+        "outputs": [
+            {
+                "internalType": "address",
                 "name": "",
                 "type": "address"
             }
