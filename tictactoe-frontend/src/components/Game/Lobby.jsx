@@ -3,7 +3,8 @@ import { io } from 'socket.io-client';
 import "./Chat.css";
 import { useWalletProvider } from '../../context/useWalletProvider';
 
-const SOCKET_SERVER_URL = "http://localhost:5173";
+
+const SOCKET_SERVER_URL = "http://localhost:5001";
 
 export default function Lobby() {
     const { walletAddress, factoryContract, walletConnected } = useWalletProvider();
@@ -22,7 +23,6 @@ export default function Lobby() {
 
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
-        console.log(chatHistory)
         setChatHistory(prev => [ ...prev, messageObj ]);
     }, []);
 
@@ -34,13 +34,31 @@ export default function Lobby() {
 
     const handleSend = (e) => {
         e.preventDefault();
-        addChatMessage({ sender: walletAddress, message: chatMessage, timestamp: Date.now() });
+        socket.emit("chatMessage", { roomId, sender: walletAddress, message: chatMessage });
         setChatMessage("");
+    };
+
+    const handleCreateRoom = (e) => {
+        e.preventDefault();
+        addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: Creating a room...', timestamp: Date.now() });
+        socket.emit("createRoom", { userAddress: walletAddress })
+    };
+
+    const handleJoinRoom = (e) => {
+        e.preventDefault();
+        socket.emit("joinRoom", { userAddress: walletAddress, roomId: joinRoom })
+        setRoomId(joinRoom);
+    };
+
+    const handleStartGame = (e) => {
+        e.preventDefault();
+        socket.emit("startGame", { roomId });
+        setGameStatus('PENDING')
     };
 
     useEffect(() => {
         if (!socket) return;
-        setIsLoaded(true)
+        setIsLoaded(true);
     }, [ socket ]);
 
     useEffect(() => {
@@ -49,7 +67,7 @@ export default function Lobby() {
             setRoomId(null);
             setCreatorAddress(null);
             setOpponentAddress(null);
-            addChatMessage({ sender: 'SYSTEM', message: 'No wallet connected.', timestamp: Date.now() });
+            addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: No wallet connected.', timestamp: Date.now() });
 
             return;
 
@@ -58,15 +76,15 @@ export default function Lobby() {
     }, [ walletConnected, addChatMessage, isLoaded ]);
 
     useEffect(() => {
-        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
+        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `[SYSTEM]: Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
     }, [ walletConnected ]);
 
     useEffect(() => {
-        const newSocket = io(SOCKET_SERVER_URL);
+        const newSocket = io.connect(SOCKET_SERVER_URL);
         setSocket(newSocket);
 
-        newSocket.on('connect', () => {
-            console.log("Connected to Server:", newSocket.id);
+        newSocket.on('newMessage', data => {
+            addChatMessage(data);
         });
 
         newSocket.on('announcement', data => {
@@ -81,13 +99,12 @@ export default function Lobby() {
         });
 
         newSocket.on('opponentJoinedRoom', data => {
-            const { joiner } = data;
+            const { joiner, roomId, creator } = data;
             setOpponentAddress(joiner);
-            setGameStatus('READY');
-        });
 
-        newSocket.on('newMessage', data => {
-            addChatMessage(data);
+            if (!creator) setCreatorAddress(creator);
+            if (!roomId) setRoomId(roomId);
+            setGameStatus('READY');
         });
 
         newSocket.on('joinError', data => {
@@ -109,7 +126,7 @@ export default function Lobby() {
                     <div className='chat-header'>Game Chat</div>
                     <div className='chat-window'>
                         {chatHistory.map(({ sender, message, timestamp }) => (
-                            <div key={timestamp + message}>{message}</div>
+                            <div key={sender + timestamp}>{message}</div>
                         ))}
                     </div>
                     <div className='input-field'>
@@ -126,9 +143,29 @@ export default function Lobby() {
                     </div>
                     {walletConnected && (
                         <div>
-                            <button>Create Room</button>
-                            <button>Join Room</button>
-                            {/* <button className="restart" onClick={restart} >Restart</button> */}
+                            {gameStatus == 'LOBBY' && (
+                                <>
+                                    <button onClick={handleCreateRoom}>Create Room</button>
+                                    <input
+                                        type='text'
+                                        value={joinRoom}
+                                        placeholder='Room Number'
+                                        onChange={e => setJoinRoom(e.target.value)}
+                                    ></input>
+                                    <button onClick={handleJoinRoom}>Join Room</button>
+                                    {/* <button className="restart" onClick={restart} >Restart</button> */}
+                                </>
+                            )}
+                            {gameStatus === 'READY' && (
+                                <>
+                                    <button disabled={creatorAddress !== walletAddress} onClick={handleStartGame}>Start Game</button>
+                                </>
+                            )}
+                            {gameStatus === 'PENDING' && (
+                                <>
+                                    <button disabled={true}>Game is starting ...</button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

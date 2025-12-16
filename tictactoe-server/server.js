@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
 
-const PORT = 5000;
+const PORT = 5001;
 const REACT_ORIGIN = "http://localhost:5173";
 const isProduction = process.env.NODE_ENV === "production";
 const rooms = {};
@@ -15,13 +15,13 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cors({ origin: REACT_ORIGIN }));
 
-if (!isProduction) {
-    app.use(cors({ origin: REACT_ORIGIN }));
-} else {
-    // need to fix this later
-    app.use(cors({ origin: "*" }));
-};
+// if (!isProduction) {
+// } else {
+//     // need to fix this later
+//     app.use(cors({ origin: "*" }));
+// };
 
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
@@ -30,19 +30,21 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: REACT_ORIGIN,
-        methods: [ "GET", "POST" ]
+        methods: [ "GET", "POST" ],
+        // credentials: true
     }
 });
 
 io.on('connection', socket => {
+    // console.log("User connected:")
     socket.on('createRoom', data => handleCreateRoom(socket, data));
     socket.on('joinRoom', data => handleJoinRoom(socket, data));
     socket.on('startGame', data => handleStartGame(socket, data));
     socket.on('chatMessage', data => handleChatMessage(socket, data));
 
-    socket.on('disconnect', () => {
-        // for later
-    })
+    // socket.on('disconnect', () => {
+    //     // for later
+    // })
 })
 
 // Error formatter
@@ -60,22 +62,24 @@ app.use((err, _req, res, _next) => {
 
 
 app.get('/', (req, res) => {
-    res.send("TicTacToe lobby connected.");
+    // res.send("TicTacToe lobby connected.");
+    console.log("this prints")
+
 });
 
 server.listen(PORT, () => {
     console.log(`Lobby server listening on ${PORT}`);
 });
 
-app.listen(PORT, () => {
-    console.log(`Lobby socketIo server listening on port ${PORT}`);
-});
+// app.listen(5000, () => {
+//     console.log(`Lobby socketIo server listening on port ${PORT}`);
+// });
 
 function handleCreateRoom(socket, data) {
     const roomId = crypto.randomBytes(3).toString('hex');
     const { userAddress } = data;
-
-    rooms[ roomId ] = {
+    // console.log(userAddress, "this")
+    const room = {
         // person who created the room
         creator: userAddress,
         // opponent
@@ -87,6 +91,8 @@ function handleCreateRoom(socket, data) {
         joinerSocketId: null,
         gameContractAddress: null
     };
+
+    rooms[ roomId ] = room;
 
     socket.join(roomId);
     socket.emit('roomCreated', { roomId, creator: userAddress });
@@ -108,10 +114,10 @@ function handleJoinRoom(socket, data) {
     room.joinerSocketId = socket.id;
 
     socket.join(roomId);
-    io.to(room.creatorSocketId).emit('opponentJoinedRoom', { joiner: userAddress });
+    io.to(roomId).emit('opponentJoinedRoom', { joiner: userAddress, roomId, creator: room.creator });
 
-    const announcement = `[SYSTEM]: Opponent ${userAddress} has joined the room.`; e
-    io.to(roomId).emit('announcement', { sender: 'SYSTEM', messgae: announcement, timestamp: Date.now() });
+    const announcement = `[SYSTEM]: ${userAddress.slice(0, 8)} has joined the room. Waiting for ${room.creator.slice(0, 8)} to start the game.`;
+    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message: announcement, timestamp: Date.now() });
 }
 
 function handleStartGame(socket, data) {
@@ -140,6 +146,6 @@ function handleChatMessage(socket, data) {
         sender: sender,
         message: message,
         timestamp: Date.now(),
-        isCreator: sender.toLowerCase() === rooms[ roomId ].creator.toLowerCase()
+        // isCreator: sender.toLowerCase() === rooms[ roomId ].creator.toLowerCase()
     })
 }
