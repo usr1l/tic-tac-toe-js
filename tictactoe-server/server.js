@@ -8,6 +8,7 @@ const crypto = require('crypto');
 
 const PORT = 5001;
 const REACT_ORIGIN = "http://localhost:5173";
+// const REACT_ORIGIN = "http://localhost:4173";
 const isProduction = process.env.NODE_ENV === "production";
 const rooms = {};
 
@@ -129,8 +130,8 @@ function handleStartGame(socket, data) {
     };
 
     room.status = 'PENDING';
-    const announcement = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Contract creation transaction sending to the blockchain...`;
-    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message: announcement, timeStamp: Date.now() });
+    const message = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Creating a smart contract...`;
+    io.to(roomId).emit('creatingGame', { sender: 'SYSTEM', message, timeStamp: Date.now() });
 }
 
 function handleChatMessage(socket, data) {
@@ -146,6 +147,5 @@ function handleChatMessage(socket, data) {
         sender: sender,
         message: message,
         timestamp: Date.now(),
-        // isCreator: sender.toLowerCase() === rooms[ roomId ].creator.toLowerCase()
     })
 }

@@ -21,6 +21,7 @@ export default function Lobby() {
     const [ chatMessage, setChatMessage ] = useState('');
     const [ chatHistory, setChatHistory ] = useState([]);
 
+
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
         setChatHistory(prev => [ ...prev, messageObj ]);
@@ -50,11 +51,53 @@ export default function Lobby() {
         setRoomId(joinRoom);
     };
 
-    const handleStartGame = (e) => {
+    const handleStartGame = async (e) => {
         e.preventDefault();
+        if (walletAddress !== creatorAddress || gameStatus !== 'READY' || !opponentAddress) {
+            addChatMessage({ sender: 'SYSTEM', message: '[ERROR]: Cannot start game. Check status and opponent.', timestamp: Date.now() });
+            return;
+        };
+
         socket.emit("startGame", { roomId });
-        setGameStatus('PENDING')
+        try {
+            // call the function
+            const tx = await factoryContract.createNewGame(opponentAddress);
+            // wait for mining
+            const receipt = await tx.wait();
+            console.log(receipt)
+        } catch (e) {
+            console.log("error: ", e)
+        };
     };
+
+    const handleTest = async () => {
+        e.preventDefault();
+        try {
+            // call the function
+            const tx = await factoryContract.createNewGame(opponentAddress);
+            // wait for mining
+            const receipt = await tx.wait();
+            // extract the deployed contract address from the gamecreated event
+            const factoryInterface = factoryContract.interface;
+            // find the game created event
+            const gameCreatedEvent = receipt.logs.map(log => {
+                try {
+                    return factoryInterface.parseLog(log);
+                } catch (e) {
+                    return null;
+                };
+            }).find(parsedLog => parsedLog && parsedLog.name === "GameCreated");
+
+            if (!gameCreatedEvent) throw new Error("Could not find the GameCreated event");
+
+            const newGameAddress = gameCreatedEvent.args[ 0 ];
+
+
+            console.log(newGameAddress)
+        } catch (e) {
+            console.log("error: ", e)
+        };
+    }
 
     useEffect(() => {
         if (!socket) return;
@@ -95,7 +138,11 @@ export default function Lobby() {
             const { roomId, creator } = data;
             setRoomId(roomId);
             setCreatorAddress(creator);
-            setGameStatus('WAITING');
+        });
+
+        newSocket.on('creatingGame', data => {
+            setGameStatus('PENDING');
+            addChatMessage(data);
         });
 
         newSocket.on('opponentJoinedRoom', data => {
@@ -163,7 +210,7 @@ export default function Lobby() {
                             )}
                             {gameStatus === 'PENDING' && (
                                 <>
-                                    <button disabled={true}>Game is starting ...</button>
+                                    <button disabled={creatorAddress !== walletAddress} onClick={handleTest}>Game is starting ...</button>
                                 </>
                             )}
                         </div>

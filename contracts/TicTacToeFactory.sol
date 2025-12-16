@@ -13,7 +13,7 @@ contract TicTacToeFactory {
 
         TicTacToe newGame = new TicTacToe();
         newGame.initialize(payable (msg.sender), _playerO);
-        
+
         deployedGames.push(address(newGame));
         emit GameCreated(address(newGame), msg.sender, _playerO);
     }
