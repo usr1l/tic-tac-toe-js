@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Square from "./Square";
-import Lobby from "./Lobby";
 import { useWalletProvider } from "../../context/useWalletProvider";
 import "./Game.css";
 
@@ -9,37 +8,55 @@ const PLAYER_X = "X";
 const PLAYER_O = "O";
 
 
-function Board({ handleMakeMove }) {
+function Board({ handleMakeMove, gameStatus, turn }) {
+    const { walletAddress } = useWalletProvider();
+
     const [ board, setBoard ] = useState(BOARD);
-    const [ turn, setTurn ] = useState(PLAYER_X);
+    const [ row, setRow ] = useState(null);
+    const [ col, setCol ] = useState(null);
+    const [ symbol, setSymbol ] = useState(PLAYER_X);
+    const [ move, setMove ] = useState('');
     const [ errMessage, setErrMessage ] = useState("");
 
-    const handleTileClick = async (e, r, c) => {
+    const handleTileClick = (e, r, c) => {
         e.preventDefault();
+        if (gameStatus !== 'ACTIVE' || walletAddress !== turn) {
+            setErrMessage("It is not your turn");
+            return;
+        };
+
         const newBoard = board.map(row => [ ...row ]);
         if (newBoard[ r ][ c ] !== null) {
             setErrMessage("Space is already taken.");
             return;
-        }
+        };
 
+        setErrMessage('');
+        setRow(r);
+        setCol(c);
+        setMove(`Seleceted space (${r}, ${c})`)
+        return;
+    };
+
+
+    const handleMoveSubmit = async (e) => {
+        e.preventDefault();
         try {
-            await handleMakeMove(r, c);
-
+            await handleMakeMove(row, col);
         } catch (e) {
             console.log('error: ', e);
         };
 
-        newBoard[ r ][ c ] = turn;
-        setBoard(newBoard);
-        setErrMessage("");
-        turn === PLAYER_X ? setTurn(PLAYER_O) : setTurn(PLAYER_X);
-        return;
-    }
+        // newBoard[ r ][ c ] = symbol;
+        // setBoard(newBoard);
+        // setErrMessage("");
+        // symbol === PLAYER_X ? setSymbol(PLAYER_O) : setSymbol(PLAYER_X);
+    };
 
     return (
         <div className="game-board">
-            <h2>{`Current Player: ${turn === PLAYER_X ? "X" : "O"}`}</h2>
-            <label style={{ height: "40px", color: "red" }}>{errMessage}</label>
+            <h2>{`Current Player: ${symbol === PLAYER_X ? "X" : "O"}`}</h2>
+            <label style={{ height: "40px", color: "red" }}>{errMessage || move}</label>
             {board.map((row, i) => (
                 <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
@@ -51,11 +68,12 @@ function Board({ handleMakeMove }) {
                     ))}
                 </div>
             ))}
+            <button disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn} onClick={handleMoveSubmit}>Submit Move</button>
         </div>
     )
 }
 
-export default function Game({ handleMakeMove }) {
+export default function Game({ handleMakeMove, turn }) {
     const { walletAddress, signer, factoryContract, walletConnected } = useWalletProvider();
     return (
         <div className="lobby-container">
@@ -65,7 +83,7 @@ export default function Game({ handleMakeMove }) {
                     <div>Player 1: {walletAddress.slice(0, 8)}...</div>
                 </div>
                 {walletConnected ? (
-                    <Board handleMakeMove={handleMakeMove} />
+                    <Board handleMakeMove={handleMakeMove} turn={turn} />
                 ) : (
                     <div>Select a wallet from above</div>
                 )}

@@ -21,6 +21,7 @@ export default function Lobby() {
 
     // 'LOBBY', 'WAITING', 'READY', 'PENDING', 'ACTIVE'
     const [ gameStatus, setGameStatus ] = useState('LOBBY');
+    const [ turn, setTurn ] = useState(null);
     const [ joinRoom, setJoinRoom ] = useState('');
     const [ chatMessage, setChatMessage ] = useState('');
     const [ chatHistory, setChatHistory ] = useState([]);
@@ -92,7 +93,31 @@ export default function Lobby() {
     };
 
     const handleMakeMove = async (r, c) => {
-        console.log(r, c)
+        if (gameStatus !== 'ACTIVE' || !gameAddress || !gameContract) {
+            addChatMessage({ sender: 'SYSTEM', message: '[ERROR]: Game is not active or contract not ready.', timestamp: Date.now() });
+            return;
+        };
+        setGameStatus('PENDING');
+        socket.emit('submitMove', { roomId, r, c, walletAddress });
+
+        try {
+            // this waits for the preinstantiated contract
+            const tx = await gameContract.makeMove(r, c);
+            // this waits for the transaction to be mined
+            await tx.wait();
+
+            socket.emit('')
+        } catch (e) {
+            console.log("error: ", e);
+            addChatMessage({
+                sender: 'SYSTEM',
+                message: '[SYSTEM]: Transaction failed, please try again.',
+                timestamp: Date.now()
+            });
+        };
+
+        setGameStatus('ACTIVE');
+        return;
     };
 
     useEffect(() => {
@@ -163,18 +188,30 @@ export default function Lobby() {
 
         newSocket.on('deploySuccess', async data => {
 
-            const { message, newGameAddress } = data;
+            const { newGameAddress } = data;
 
-            try {
-                const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signer)
-            } catch (e) {
-
-            };
-
+            const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signer);
+            const message = {
+                sender: 'SYSTEM',
+                message: `[SYSTEM]: Contract deployment success, game has started ...`,
+                timestamp: Date.now()
+            }
+            setGameContract(newGameInstance);
             setGameAddress(newGameAddress);
+            setTurn(creatorAddress);
             setGameStatus('ACTIVE');
             addChatMessage(message);
-        })
+        });
+
+        newSocket.on('movePending', data => {
+            const { r, c, walletAddress } = data
+            const message = {
+                sender: 'SYSTEM',
+                message: `${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}, waiting for transaction to be validated by the blockchain ...)`,
+                timestamp: Date.now()
+            };
+            addChatMessage(message);
+        });
 
         return () => {
             setSocket(null);
@@ -185,9 +222,7 @@ export default function Lobby() {
 
     return (
         <>
-            {/* {gameAddress && ( */}
-            <Game handleMakeMove={handleMakeMove} />
-            {/* )} */}
+            {gameContract && (<Game handleMakeMove={handleMakeMove} gameStatus={gameStatus} turn={turn} />)}
             {isLoaded && (
                 <div className='chat-container'>
                     <div className='chat-header'>Game Chat</div>
@@ -230,7 +265,7 @@ export default function Lobby() {
                             )}
                             {gameStatus === 'PENDING' && (
                                 <>
-                                    <button disabled={creatorAddress !== walletAddress}>Game is starting ...</button>
+                                    <button disabled={true}>Game is starting ...</button>
                                 </>
                             )}
                         </div>

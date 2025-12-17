@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
+const { timeStamp } = require('console');
 
 const PORT = 5001;
 const REACT_ORIGIN = "http://localhost:5173";
@@ -42,6 +43,8 @@ io.on('connection', socket => {
     socket.on('chatMessage', data => handleChatMessage(socket, data));
     socket.on('deployFail', data => handleDeployFail(socket, data));
     socket.on('deploySuccess', data => handleDeploySuccess(socket, data));
+    socket.on('submitMove', data = handleSubmitMove(socket, data));
+    socket.on()
 
     // socket.on('disconnect', () => {
     //     // for later
@@ -79,15 +82,11 @@ server.listen(PORT, () => {
 function handleCreateRoom(socket, data) {
     const roomId = crypto.randomBytes(3).toString('hex');
     const { userAddress } = data;
-    // console.log(userAddress, "this")
+
     const room = {
-        // person who created the room
         creator: userAddress,
-        // opponent
         joiner: null,
-        // game creation status
         status: 'WAITING',
-        //
         creatorSocketId: socket.id,
         joinerSocketId: null,
         gameContractAddress: null
@@ -168,15 +167,10 @@ function handleDeploySuccess(socket, data) {
     const { roomId, newGameAddress } = data;
     rooms[ roomId ].gameContractAddress = newGameAddress;
 
-    io.to(roomId).emit('deploySuccess',
-        data = {
-            message: {
-
-                sender: 'SYSTEM',
-                message: `[SYSTEM]: Contract deployment success, game has started ...`,
-                timestamp: Date.now()
-            },
-            newGameAddress
-        }
-    )
+    io.to(roomId).emit('deploySuccess', { newGameAddress });
 };
+
+function handleSubmitMove(socket, data) {
+    const { roomId, r, c, walletAddress } = data;
+    io.to(roomId).emit('movePending', { r, c, walletAddress });
+}
