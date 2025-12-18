@@ -240,7 +240,7 @@ export default function Lobby() {
         newSocket.on('moveSuccess', data => {
             const { nextPlayer, newBoard } = data;
             const updatedBoard = boardRef.current.map(row => [ ...row ]);
-            for (row in board) {
+            for (row in updatedBoard) {
                 for (col in row) {
                     updatedBoard[ row ][ col ] = newBoard[ row ][ col ];
                 }
