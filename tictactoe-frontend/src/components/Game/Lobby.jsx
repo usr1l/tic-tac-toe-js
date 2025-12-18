@@ -60,7 +60,8 @@ export default function Lobby() {
     const handleCreateRoom = (e) => {
         e.preventDefault();
         addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: Creating a room...', timestamp: Date.now() });
-        socket.emit("createRoom", { userAddress: walletAddress })
+        socket.emit("createRoom", { userAddress: walletAddress });
+        setGameStatus('WAITING');
     };
 
     const handleJoinRoom = (e) => {
@@ -169,6 +170,23 @@ export default function Lobby() {
 
     };
 
+    const handleLeaveRoom = () => {
+        socket.emit('leaveRoom', { roomId, userAddress: walletAddress, isCreator: walletAddress === creatorAddress ? true : false })
+        setRoomId(null);
+        setGameStatus('LOBBY');
+        setOpponentAddress(null);
+        setCreatorAddress(null);
+        setGameAddress(null);
+        setGameContract(null);
+        setBoard(BOARD);
+        setGameWinner(null);
+        addChatMessage({
+            sender: 'SYSTEM',
+            message: '[SYSTEM]: You left the room.',
+            timestamp: Date.now()
+        })
+    };
+
     useEffect(() => {
         signerRef.current = signer;
         creatorRef.current = creatorAddress;
@@ -245,7 +263,6 @@ export default function Lobby() {
         });
 
         newSocket.on('deploySuccess', data => {
-
             const { newGameAddress } = data;
 
             const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signerRef.current);
@@ -272,9 +289,10 @@ export default function Lobby() {
                 }
             };
 
+            setBoard(updatedBoard);
+
             if (winner == null) {
                 setTurn(nextPlayer);
-                setBoard(updatedBoard);
                 setGameStatus('ACTIVE');
                 return;
             };
@@ -336,9 +354,9 @@ export default function Lobby() {
                     </div>
                     {walletConnected && (
                         <div>
-                            {gameStatus == 'LOBBY' && (
+                            {gameStatus === 'LOBBY' && (
                                 <>
-                                    <button onClick={handleCreateRoom}>Create Room</button>
+                                    <button onClick={e => handleCreateRoom(e)}>Create Room</button>
                                     <input
                                         type='text'
                                         value={joinRoom}
@@ -351,7 +369,12 @@ export default function Lobby() {
                             )}
                             {gameStatus === 'READY' && (
                                 <>
-                                    <button disabled={creatorAddress !== walletAddress} onClick={handleStartGame}>Start Game</button>
+                                    <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
+                                </>
+                            )}
+                            {gameStatus !== 'LOBBY' && (
+                                <>
+                                    <button onClick={e => handleLeaveRoom(e)} >Leave Room</button>
                                 </>
                             )}
                             {gameStatus === 'PENDING' && (

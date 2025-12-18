@@ -47,6 +47,7 @@ io.on('connection', socket => {
     socket.on('moveFail', data => handleMoveFail(socket, data));
     socket.on('moveSuccess', data => handleMoveSuccess(socket, data));
     socket.on('restartGame', data => handleRestartGame(socket, data));
+    socket.on('leaveRoom', data => handleLeaveRoom(socket, data));
 
     // socket.on('disconnect', () => {
     //     // for later
@@ -157,7 +158,7 @@ function handleDeployFail(socket, data) {
     if (socket.id !== rooms[ roomId ].creatorSocketId && socket.id !== rooms[ roomId ].joinerSocketId) {
         return;
     };
-
+    rooms[ roomId ].status = 'READY'
     io.to(roomId).emit('deployFail');
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
@@ -170,12 +171,13 @@ function handleDeployFail(socket, data) {
 function handleDeploySuccess(socket, data) {
     const { roomId, newGameAddress } = data;
     rooms[ roomId ].gameContractAddress = newGameAddress;
-
+    rooms[ roomId ].status = 'ACTIVE'
     io.to(roomId).emit('deploySuccess', { newGameAddress });
 };
 
 function handleSubmitMove(socket, data) {
     const { roomId, r, c, walletAddress } = data;
+
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
         message: `[SYSTEM]: ${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}), waiting for transaction to be validated by the blockchain ...`,
@@ -212,4 +214,29 @@ function handleRestartGame(socket, data) {
         message: `Game has been successfully restarted. ${nextPlayer.slice(0, 8)} moves first.`,
         timestampe: Date.now()
     });
+};
+
+function handleLeaveRoom(socket, data) {
+    const { roomId, isCreator } = data;
+    const room = rooms[ roomId ];
+    if (!isCreator) {
+        room.joiner = null;
+        room.joinerSocketId = null;
+        room.gameContractAddress = null;
+        room.status = 'WAITING';
+        io.to(roomId).emit('joinerLeft');
+        io.to(roomId).emit('announcement', {
+            sender: 'SYSTEM',
+            message: 'Opponent has left the room',
+            timestamp: Date.now()
+        });
+    };
+
+    if (isCreator) {
+        room.creator = room.joiner;
+        room.joiner = null;
+        room.creatorSocketId = room.joinerSocketId;
+        room.joinerSocketId = null;
+    }
+
 };

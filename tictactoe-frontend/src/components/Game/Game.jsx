@@ -27,7 +27,7 @@ function Board({
     const handleTileClick = (e, r, c) => {
         e.preventDefault();
         if (gameStatus === 'ENDED') {
-            setErrMessage("Game has ended.")
+            setErrMessage("Game has ended.");
         };
 
         if (gameStatus !== 'ACTIVE' || walletAddress !== turn) {
@@ -46,7 +46,6 @@ function Board({
         setMove(`Seleceted space (${r}, ${c})`)
         return;
     };
-
 
     const handleMoveSubmit = async (e) => {
         e.preventDefault();
@@ -105,11 +104,11 @@ export default function Game({
             <div className="game">
                 <h1>TIC TAC TOE</h1>
                 <div>
-                    <div>Player X: {walletAddress.slice(0, 8)}...</div>
+                    <div>Player X: {creatorAddress?.slice(0, 8)}...</div>
                     <div>Player O: {opponentAddress?.slice(0, 8)}...</div>
                     {gameWinner && (
                         <div>
-                            {winner !== ZERO_ADDRESS ? `Congratulations, the winner is ${winner.slice(0, 8)}!` : "Game over. It's a tie!"}
+                            {gameWinner !== ZERO_ADDRESS ? `Congratulations, the winner is ${gameWinner.slice(0, 8)}!` : "Game over. It's a tie!"}
                         </div>
                     )}
                 </div>
