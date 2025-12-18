@@ -138,6 +138,7 @@ export default function Lobby() {
 
             if (isGameOver) {
                 winner = await gameContract.winner();
+                setGameStatus('ENDED')
             };
 
             socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard, winner });
@@ -150,6 +151,23 @@ export default function Lobby() {
             setGameStatus('ACTIVE');
             return false;
         };
+    };
+
+    const handleRestartGame = async (e) => {
+        if (!gameContract) return;
+
+        try {
+            setGameStatus('PENDING')
+            const tx = await gameContract.restartGame();
+            await tx.wait();
+
+            const nextPlayer = await gameContract.nextPlayer();
+
+            socket.emit('restartGame', { roomId, nextPlayer });
+        } catch (e) {
+            console.log("error: ", e);
+        };
+
     };
 
     useEffect(() => {
@@ -265,6 +283,10 @@ export default function Lobby() {
             setGameWinner(winner);
         });
 
+        newSocket.on('restartGame', data => {
+
+        });
+
         return () => {
             newSocket.close()
             setSocket(null);
@@ -282,7 +304,9 @@ export default function Lobby() {
                     turn={turn}
                     creatorAddress={creatorAddress}
                     board={board}
+                    opponentAddress={opponentAddress}
                     gameWinner={gameWinner}
+                    handleRestartGame={handleRestartGame}
                 />
             )}
             {isLoaded && (

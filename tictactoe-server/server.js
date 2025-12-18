@@ -46,6 +46,7 @@ io.on('connection', socket => {
     socket.on('submitMove', data => handleSubmitMove(socket, data));
     socket.on('moveFail', data => handleMoveFail(socket, data));
     socket.on('moveSuccess', data => handleMoveSuccess(socket, data));
+    socket.on('restartGame', data => handleRestartGame(socket, data));
 
     // socket.on('disconnect', () => {
     //     // for later
@@ -200,3 +201,15 @@ function handleMoveSuccess(socket, data) {
         timestamp: Date.now()
     });
 };
+
+function handleRestartGame(socket, data) {
+    const { roomId, nextPlayer } = data;
+
+    io.to(roomId).emit('restartGame', { nextPlayer });
+
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: `Game has been successfully restarted. ${nextPlayer.slice(0, 8)} moves first`,
+        timestampe: Date.now()
+    });
+}
