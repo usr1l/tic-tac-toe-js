@@ -1,8 +1,3 @@
-// test code will verify three main things:
-// 1. the contract deploys successfully
-// 2. playerX is set to the address that deployed the contract
-// 3. nextPlayer is correctly initialized to playerX
-
 // import the necessary tools from hardhat
 const { expect } = require("chai");
 // ethers.js is used to interact with the Ethereum blockchain and smart contracts
@@ -12,32 +7,60 @@ describe("TicTacToe", function () {
   let ticTacToe; // Variable to hold the deployed contract instance
   let deployer;  // Player X
   let playerO;   // Player O
+  let factory;
 
   // 2. The 'beforeEach' Hook: Deploys a new contract instance before every test
   beforeEach(async function () {
-    // Get the signers (test accounts) provided by Hardhat
+    // // Get the signers (test accounts) provided by Hardhat
+    // [ deployer, playerO ] = await ethers.getSigners();
+
+    // // Get the ContractFactory for the TicTacToe contract
+    // const TicTacToeFactory = await ethers.getContractFactory("TicTacToe");
+
+    // // Deploy the contract, passing Player O's address to the constructor
+    // // The deployer automatically becomes Player X (msg.sender)
+    // ticTacToe = await TicTacToeFactory.deploy(playerO.address);
+
+    // // later hardhat versions may require awaiting deployment completion, as .deployed() no longer includes that
+    // // await ticTacToe.deployed();
+    // await ticTacToe.waitForDeployment();
+
     [ deployer, playerO ] = await ethers.getSigners();
 
-    // Get the ContractFactory for the TicTacToe contract
-    const TicTacToeFactory = await ethers.getContractFactory("TicTacToe");
+    // 1. Deploy the Factory
+    const TicTacToeFactory = await ethers.getContractFactory("TicTacToeFactory");
+    factory = await TicTacToeFactory.deploy();
+    await factory.waitForDeployment();
 
-    // Deploy the contract, passing Player O's address to the constructor
-    // The deployer automatically becomes Player X (msg.sender)
-    ticTacToe = await TicTacToeFactory.deploy(playerO.address);
+    // 2. Create a new game
+    const tx = await factory.createNewGame(playerO.address);
+    const receipt = await tx.wait();
 
-    // later hardhat versions may require awaiting deployment completion, as .deployed() no longer includes that
-    // await ticTacToe.deployed();
-    await ticTacToe.waitForDeployment();
+    // 3. Find the GameCreated event in the logs
+    const event = receipt.logs.find(
+      (log) => factory.interface.parseLog(log)?.name === "GameCreated"
+    );
+
+    // Safety check to ensure event exists
+    if (!event) throw new Error("GameCreated event not found");
+
+    const parsedLog = factory.interface.parseLog(event);
+    const gameAddress = parsedLog.args[ 0 ]; // The gameAddress from the event
+
+    // 4. Attach to the TicTacToe instance
+    const TicTacToe = await ethers.getContractFactory("TicTacToe");
+    ticTacToe = TicTacToe.attach(gameAddress);
+
   });
 
   // 3. Test Cases (It blocks)
   it("Should set the deployer as Player X and initialize the turn", async function () {
     // Check 1: Verify Player X is the address that deployed the contract
     // We call the public 'playerX' state variable function on the contract instance
-    expect(await ticTacToe.playerX()).to.equal(deployer.address);
+    expect(await ticTacToe.getPlayerX()).to.equal(deployer.address);
 
     // Check 2: Verify Player O is the address passed to the constructor
-    expect(await ticTacToe.playerO()).to.equal(playerO.address);
+    expect(await ticTacToe.getPlayerO()).to.equal(playerO.address);
 
     // Check 3: Verify Player X starts the game (nextPlayer == playerX)
     expect(await ticTacToe.nextPlayer()).to.equal(deployer.address);
@@ -52,12 +75,12 @@ describe("TicTacToe", function () {
 
   // 4. Test Case for the REQUIRE statement in the constructor
   it("Should revert if Player X tries to deploy the game with themselves as Player O", async function () {
-    const TicTacToeFactory = await ethers.getContractFactory("TicTacToe");
+    // const TicTacToeFactory = await ethers.getContractFactory("TicTacToeFactory");
 
     // We expect the deployment to fail (revert) because playerX == playerO
     await expect(
-      TicTacToeFactory.deploy(deployer.address) // Deploying with deployer's address as Player O
-    ).to.be.revertedWith("Player O must be a different address.");
+      factory.createNewGame(deployer.address) // Deploying with deployer's address as Player O
+    ).to.be.revertedWith("Can't play against yourself.");
   });
 
   it("Should allow a player to make a move and switch turns", async function () {
@@ -143,5 +166,34 @@ describe("TicTacToe", function () {
     await expect(
       ticTacToe.connect(playerO).makeMove(0, 0)
     ).to.be.revertedWith("The game is over.");
+  })
+
+  it("Should restart the game, set nextPlayer to be the sender, set a new clean board, and set isGameOver to null", async function () {
+    await ticTacToe.makeMove(0, 0);
+    await ticTacToe.connect(playerO).makeMove(0, 1);
+    await ticTacToe.makeMove(0, 2);
+    await ticTacToe.connect(playerO).makeMove(1, 1);
+    await ticTacToe.makeMove(1, 0);
+    await ticTacToe.connect(playerO).makeMove(1, 2);
+    await ticTacToe.makeMove(2, 1);
+    await ticTacToe.connect(playerO).makeMove(2, 0);
+    await ticTacToe.makeMove(2, 2);
+
+    expect(await ticTacToe.isGameOver()).to.equal(true);
+    expect(await ticTacToe.nextPlayer()).to.equal(deployer.address);
+
+    await expect(
+      ticTacToe.connect(playerO).makeMove(0, 0)
+    ).to.be.revertedWith("The game is over.");
+
+    expect(await ticTacToe.isGameOver()).to.equal(true);
+
+    await ticTacToe.connect(playerO).restartGame();
+
+    expect(await ticTacToe.isGameOver()).to.equal(false);
+    expect(await ticTacToe.nextPlayer()).to.equal(playerO);
+
+    expect(await ticTacToe.board(0, 0)).to.equal(0);
+    expect(await ticTacToe.board(2, 2)).to.equal(0);
   })
 });

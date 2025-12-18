@@ -48,6 +48,7 @@ contract TicTacToe {
         nextPlayer = playerX;
         isGameOver = false;
 
+        // points to this contract address
         emit GameStarted(address(this), playerX, playerO);
     }
 
@@ -154,8 +155,8 @@ contract TicTacToe {
 
         // check for draw condition (all cells filled but no winner)
         uint8 filledCells = 0;
-        for (uint i = 0; i < 3; i++) {
-            for (uint8 j = 0; j < 3; j++) {
+        for (uint8 i = 0; i < board.length; i++) {
+            for (uint8 j = 0; j < board[i].length; j++) {
                 if (board[i][j] != 0) filledCells++;
             }
         }
@@ -165,5 +166,20 @@ contract TicTacToe {
             winner = address(0);
             emit GameEnded(winner);
         }
+    }
+
+    function restartGame() public {
+        require(msg.sender == playerX || msg.sender == playerO, "Cannot restart game, not a player");
+
+        for (uint8 i = 0; i < board.length; i++) {
+            for (uint8 j = 0; j < board[i].length; j++) board[i][j] = 0;
+        }
+
+        isGameOver = false;
+        winner = address(0);
+
+        nextPlayer = msg.sender;
+
+        emit GameStarted(address(this), playerX, playerO);
     }
 }

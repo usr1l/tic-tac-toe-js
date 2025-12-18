@@ -6,8 +6,9 @@ const helmet = require('helmet');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
 
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 const REACT_ORIGIN = "http://localhost:5173";
+// const REACT_ORIGIN = "http://localhost:4173";
 const isProduction = process.env.NODE_ENV === "production";
 const rooms = {};
 
@@ -15,7 +16,10 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(express.json());
-app.use(cors({ origin: REACT_ORIGIN }));
+app.use(cors({
+    origin: process.env.FRONTEND_URL || REACT_ORIGIN,
+    METHODS: [ "GET", "POST" ]
+}));
 
 // if (!isProduction) {
 // } else {
@@ -31,41 +35,55 @@ const io = new Server(server, {
     cors: {
         origin: REACT_ORIGIN,
         methods: [ "GET", "POST" ],
-        // credentials: true
     }
 });
 
 io.on('connection', socket => {
-    // console.log("User connected:")
     socket.on('createRoom', data => handleCreateRoom(socket, data));
     socket.on('joinRoom', data => handleJoinRoom(socket, data));
     socket.on('startGame', data => handleStartGame(socket, data));
     socket.on('chatMessage', data => handleChatMessage(socket, data));
-
+    socket.on('deployFail', data => handleDeployFail(socket, data));
+    socket.on('deploySuccess', data => handleDeploySuccess(socket, data));
+    socket.on('submitMove', data => handleSubmitMove(socket, data));
+    socket.on('moveFail', data => handleMoveFail(socket, data));
+    socket.on('moveSuccess', data => handleMoveSuccess(socket, data));
+    socket.on('restartGame', data => handleRestartGame(socket, data));
+    socket.on('leaveRoom', data => handleLeaveRoom(socket, data));
+    socket.on('transacting', data => handleTransacting(socket, data));
+    socket.on('disconnecting', () => {
+        const joinedRooms = Array.from(socket.rooms);
+        const gameRoomId = joinedRooms.find(id => rooms[ id ]);
+        if (gameRoomId) {
+            const room = rooms[ gameRoomId ];
+            const isCreator = room.creatorSocketId === socket.id;
+            handleLeaveRoom(socket, { roomId: gameRoomId, isCreator });
+        }
+    });
     // socket.on('disconnect', () => {
     //     // for later
     // })
 })
 
-// Error formatter
-app.use((err, _req, res, _next) => {
-    res.status(err.status || 500);
-    console.error(err);
-    res.json({
-        // title: err.title || 'Server Error',
-        message: err.message,
-        statusCode: err.status,
-        errors: err.errors,
-        stack: isProduction ? null : err.stack
-    });
-});
+// // Error formatter
+// app.use((err, _req, res, _next) => {
+//     res.status(err.status || 500);
+//     console.error(err);
+//     res.json({
+//         // title: err.title || 'Server Error',
+//         message: err.message,
+//         statusCode: err.status,
+//         errors: err.errors,
+//         stack: isProduction ? null : err.stack
+//     });
+// });
 
 
-app.get('/', (req, res) => {
-    // res.send("TicTacToe lobby connected.");
-    console.log("this prints")
+// app.get('/', (req, res) => {
+//     // res.send("TicTacToe lobby connected.");
+//     console.log("this prints")
 
-});
+// });
 
 server.listen(PORT, () => {
     console.log(`Lobby server listening on ${PORT}`);
@@ -78,15 +96,11 @@ server.listen(PORT, () => {
 function handleCreateRoom(socket, data) {
     const roomId = crypto.randomBytes(3).toString('hex');
     const { userAddress } = data;
-    // console.log(userAddress, "this")
+
     const room = {
-        // person who created the room
         creator: userAddress,
-        // opponent
         joiner: null,
-        // game creation status
         status: 'WAITING',
-        //
         creatorSocketId: socket.id,
         joinerSocketId: null,
         gameContractAddress: null
@@ -109,6 +123,15 @@ function handleJoinRoom(socket, data) {
         return socket.emit('joinError', { message: `Room ${roomId} not available.` });
     }
 
+    if (room.creator && room.joiner) {
+        io.to(socket.id).emit('announcement', {
+            sender: 'SYSTEM',
+            message: 'Join failed. Room is full.',
+            timestamp: Date.now()
+        });
+        return;
+    }
+
     room.joiner = userAddress;
     room.status = 'READY';
     room.joinerSocketId = socket.id;
@@ -129,8 +152,9 @@ function handleStartGame(socket, data) {
     };
 
     room.status = 'PENDING';
-    const announcement = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Contract creation transaction sending to the blockchain...`;
-    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message: announcement, timeStamp: Date.now() });
+    const message = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Creating a smart contract...`;
+    io.to(roomId).emit('creatingGame');
+    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timestamp: Date.now() })
 }
 
 function handleChatMessage(socket, data) {
@@ -140,12 +164,119 @@ function handleChatMessage(socket, data) {
     // check for if sender is in the room
     if (socket.id !== rooms[ roomId ].creatorSocketId && socket.id !== rooms[ roomId ].joinerSocketId) {
         return;
-    }
+    };
 
-    io.to(roomId).emit('newMessage', {
+    io.to(roomId).emit('announcement', {
         sender: sender,
         message: message,
         timestamp: Date.now(),
-        // isCreator: sender.toLowerCase() === rooms[ roomId ].creator.toLowerCase()
-    })
+    });
 }
+
+function handleDeployFail(socket, data) {
+    const { roomId } = data;
+    if (socket.id !== rooms[ roomId ].creatorSocketId && socket.id !== rooms[ roomId ].joinerSocketId) {
+        return;
+    };
+    rooms[ roomId ].status = 'READY'
+    io.to(roomId).emit('deployFail');
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: "[ERROR]: Contract deployment failed. Please try again.",
+        timestamp: Date.now()
+    });
+
+};
+
+function handleDeploySuccess(socket, data) {
+    const { roomId, newGameAddress } = data;
+    rooms[ roomId ].gameContractAddress = newGameAddress;
+    rooms[ roomId ].status = 'ACTIVE'
+    io.to(roomId).emit('deploySuccess', { newGameAddress });
+};
+
+function handleSubmitMove(socket, data) {
+    const { roomId, r, c, walletAddress } = data;
+
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: `[SYSTEM]: ${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}), waiting for transaction to be validated by the blockchain ...`,
+        timestamp: Date.now()
+    });
+};
+
+function handleMoveFail(socket, data) {
+    const { roomId } = data;
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: '[SYSTEM]: Transaction failed, please try again.',
+        timestamp: Date.now()
+    })
+};
+
+function handleMoveSuccess(socket, data) {
+    const { r, c, roomId, walletAddress, nextPlayer, newBoard, winner } = data;
+    io.to(roomId).emit('moveSuccess', { walletAddress, nextPlayer, newBoard, winner });
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: `[SYSTEM]: Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
+        timestamp: Date.now()
+    });
+};
+
+function handleRestartGame(socket, data) {
+    const { roomId, nextPlayer } = data;
+
+    io.to(roomId).emit('restartGame', { nextPlayer });
+
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: `Game has been successfully restarted. ${nextPlayer.slice(0, 8)} moves first.`,
+        timestampe: Date.now()
+    });
+};
+
+function handleLeaveRoom(socket, data) {
+    const { roomId, isCreator } = data;
+    const room = rooms[ roomId ];
+
+    if (!room) return;
+
+    if (isCreator) {
+        if (!room.joiner) {
+            delete rooms[ roomId ];
+        } else {
+            room.creator = room.joiner;
+            room.joiner = null;
+            room.creatorSocketId = room.joinerSocketId;
+            room.joinerSocketId = null;
+            room.gameContractAddress = null;
+            room.status = 'WAITING';
+            io.to(room.creatorSocketId).emit('creatorLeft');
+            io.to(room.creatorSocketId).emit('announcement', {
+                sender: 'SYSTEM',
+                message: 'Room owner has left. You are the new owner.'
+            });
+        };
+    } else if (!isCreator) {
+        room.joiner = null;
+        room.joinerSocketId = null;
+        room.gameContractAddress = null;
+        room.status = 'WAITING';
+        io.to(room.creatorSocketId).emit('joinerLeft');
+        io.to(room.creatorSocketId).emit('announcement', {
+            sender: 'SYSTEM',
+            message: 'Opponent has left the room.',
+            timestamp: Date.now()
+        });
+    };
+
+    socket.leave(roomId);
+    io.emit('roomListUpdate', Object.values(rooms));
+
+};
+
+function handleTransacting(socket, data) {
+    const { roomId, walletAddress } = data;
+    io.to(roomId).emit('transacting', { walletAddress });
+};

@@ -3,6 +3,7 @@ import { useSyncProviders } from './hooks/useSyncProvider.js';
 import WalletProvider from './context/WalletProvider.jsx';
 import Game from './components/Game/Game.jsx';
 import './App.css';
+import Lobby from './components/Game/Lobby.jsx';
 
 function App() {
   const providers = useSyncProviders();
@@ -37,10 +38,10 @@ function App() {
               </button>
             ))
           ) : (
-            <div>No Announced Wallet</div>
+            <div>No Announced Wallet. Check if Wallet Extension is Active.</div>
           )}
         </div>
-        <Game />
+        <Lobby />
       </div>
     </WalletProvider>
   )
