@@ -38,7 +38,7 @@ function App() {
               </button>
             ))
           ) : (
-            <div>No Announced Wallet</div>
+            <div>No Announced Wallet. Check if Wallet Extension is Active.</div>
           )}
         </div>
         <Lobby />

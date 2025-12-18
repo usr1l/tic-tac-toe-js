@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Square from "./Square";
 import { useWalletProvider } from "../../context/useWalletProvider";
 import "./Game.css";
@@ -6,7 +6,7 @@ import "./Game.css";
 const PLAYER_X = "X";
 const PLAYER_O = "O";
 
-function Board({ handleMakeMove, gameStatus, turn, creatorAddress, opponentAddress, board, setBoard }) {
+function Board({ handleMakeMove, gameStatus, turn, creatorAddress, board, gameWinner }) {
     const { walletAddress } = useWalletProvider();
 
     const [ row, setRow ] = useState(null);
@@ -45,6 +45,10 @@ function Board({ handleMakeMove, gameStatus, turn, creatorAddress, opponentAddre
         return;
     };
 
+    const handleRestartGame = (e) => {
+        e.preventDefault();
+    };
+
     return (
         <div className="game-board">
             <h2>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h2>
@@ -60,12 +64,16 @@ function Board({ handleMakeMove, gameStatus, turn, creatorAddress, opponentAddre
                     ))}
                 </div>
             ))}
-            <button disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn} onClick={e => handleMoveSubmit(e)}>Submit Move</button>
+            {!gameWinner ? (
+                <button disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn} onClick={e => handleMoveSubmit(e)}>Submit Move</button>
+            ) : (
+                <button onClick={e => handleRestartGame(e)}>Restart Game</button>
+            )}
         </div>
     )
 }
 
-export default function Game({ handleMakeMove, turn, gameStatus, creatorAddress, opponentAddress, board, setBoard }) {
+export default function Game({ handleMakeMove, turn, gameStatus, creatorAddress, board, gameWinner }) {
     const { walletAddress, walletConnected } = useWalletProvider();
     return (
         <div className="lobby-container">
@@ -80,9 +88,8 @@ export default function Game({ handleMakeMove, turn, gameStatus, creatorAddress,
                         turn={turn}
                         gameStatus={gameStatus}
                         creatorAddress={creatorAddress}
-                        opponentAddress={opponentAddress}
                         board={board}
-                        setBoard={setBoard}
+                        gameWinner={gameWinner}
                     />
                 ) : (
                     <div>Select a wallet from above</div>

@@ -20,6 +20,7 @@ export default function Lobby() {
     const [ opponentAddress, setOpponentAddress ] = useState(null);
     const [ gameAddress, setGameAddress ] = useState(null);
     const [ gameContract, setGameContract ] = useState(null);
+    const [ gameWinner, setGameWinner ] = useState(null);
 
     // 'LOBBY', 'WAITING', 'READY', 'PENDING', 'ACTIVE'
     const [ gameStatus, setGameStatus ] = useState('LOBBY');
@@ -128,10 +129,18 @@ export default function Lobby() {
 
             const nextPlayer = await gameContract.nextPlayer();
             const board = await gameContract.getBoardState();
-            const newBoard = board.map(row => {
-                row.map(cell => Number(cell));
-            });
-            socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard });
+            const newBoard = board.map(row =>
+                row.map(cell => Number(cell))
+            );
+
+            let winner = null;
+            const isGameOver = await gameContract.isGameOver();
+
+            if (isGameOver) {
+                winner = await gameContract.winner();
+            };
+
+            socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard, winner });
             // setTurn(turn === creatorAddress ? opponentAddress : creatorAddress);
             // setGameStatus('ACTIVE');
             // return true;
@@ -238,15 +247,22 @@ export default function Lobby() {
         });
 
         newSocket.on('moveSuccess', data => {
-            const { nextPlayer, newBoard } = data;
+            const { nextPlayer, newBoard, winner } = data;
             const updatedBoard = boardRef.current.map(row => [ ...row ]);
-            for (row in updatedBoard) {
-                for (col in updatedBoard[ row ]) {
-                    updatedBoard[ row ][ col ] = newBoard[ row ][ col ];
+            for (const r in updatedBoard) {
+                for (const c in updatedBoard[ r ]) {
+                    updatedBoard[ r ][ c ] = newBoard[ r ][ c ];
                 }
             };
-            setTurn(nextPlayer);
-            setBoard(updatedBoard);
+
+            if (winner == null) {
+                setTurn(nextPlayer);
+                setBoard(updatedBoard);
+                setGameStatus('ACTIVE');
+                return;
+            };
+
+            setGameWinner(winner);
         });
 
         return () => {
@@ -264,10 +280,9 @@ export default function Lobby() {
                     handleMakeMove={handleMakeMove}
                     gameStatus={gameStatus}
                     turn={turn}
-                    opponentAddress={opponentAddress}
                     creatorAddress={creatorAddress}
                     board={board}
-                    setBoard={setBoard}
+                    gameWinner={gameWinner}
                 />
             )}
             {isLoaded && (

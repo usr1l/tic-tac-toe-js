@@ -192,8 +192,8 @@ function handleMoveFail(socket, data) {
 };
 
 function handleMoveSuccess(socket, data) {
-    const { r, c, roomId, walletAddress, nextPlayer, newBoard } = data;
-    io.to(roomId).emit('moveSuccess', { walletAddress, nextPlayer, newBoard });
+    const { r, c, roomId, walletAddress, nextPlayer, newBoard, winner } = data;
+    io.to(roomId).emit('moveSuccess', { walletAddress, nextPlayer, newBoard, winner });
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
         message: `[SYSTEM]: Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
