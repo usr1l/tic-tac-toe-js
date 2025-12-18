@@ -84,6 +84,10 @@ function Board({
                     onClick={e => handleRestartGame(e)}
                 >Restart Game</button>
             )}
+            <button
+                disabled={gameWinner === ZERO_ADDRESS ? walletAddress === creatorAddress : gameWinner === walletAddress}
+                onClick={e => handleRestartGame(e)}
+            >Restart Game</button>
         </div>
     )
 }

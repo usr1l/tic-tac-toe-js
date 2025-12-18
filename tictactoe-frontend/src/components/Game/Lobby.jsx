@@ -332,8 +332,7 @@ export default function Lobby() {
         });
 
         newSocket.on('transacting', data => {
-            setGameStatus('PENDING');
-            return;
+            setGameStatus('TRANSACTING');
         });
 
         return () => {
@@ -362,8 +361,8 @@ export default function Lobby() {
                 <div className='chat-container'>
                     <div className='chat-header'>Game Chat</div>
                     <div className='chat-window'>
-                        {chatHistory.map(({ sender, message, timestamp }) => (
-                            <div key={sender + timestamp}>{message}</div>
+                        {chatHistory.map(({ sender, message, timestamp }, index) => (
+                            <div key={sender + timestamp + index}>{message}</div>
                         ))}
                     </div>
                     <div className='input-field'>
@@ -393,7 +392,7 @@ export default function Lobby() {
                                 </>
                             ) : (
                                 <>
-                                    <button disabled={gameStatus === 'PENDING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
+                                    <button disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
                                 </>
                             )}
                             {gameStatus === 'READY' && (
