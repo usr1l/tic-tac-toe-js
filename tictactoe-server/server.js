@@ -47,6 +47,7 @@ io.on('connection', socket => {
     socket.on('moveSuccess', data => handleMoveSuccess(socket, data));
     socket.on('restartGame', data => handleRestartGame(socket, data));
     socket.on('leaveRoom', data => handleLeaveRoom(socket, data));
+    socket.on('transacting', data => handleTransacting(socket, data));
     socket.on('disconnecting', () => {
         const joinedRooms = Array.from(socket.rooms);
         const gameRoomId = joinedRooms.find(id => rooms[ id ]);
@@ -270,4 +271,9 @@ function handleLeaveRoom(socket, data) {
     socket.leave(roomId);
     io.emit('roomListUpdate', Object.values(rooms));
 
+};
+
+function handleTransacting(socket, data) {
+    const { roomId, walletAddress } = data;
+    io.to(roomId).emit('transacting', { walletAddress });
 };

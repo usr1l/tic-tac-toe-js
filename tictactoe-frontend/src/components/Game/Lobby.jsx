@@ -120,7 +120,7 @@ export default function Lobby() {
             addChatMessage({ sender: 'SYSTEM', message: '[ERROR]: Game is not active or contract not ready.', timestamp: Date.now() });
             return;
         };
-        setGameStatus('PENDING');
+        socket.emit('transacting', { roomId });
         socket.emit('submitMove', { roomId, r, c, walletAddress });
         try {
             // this waits for the preinstantiated contract
@@ -154,10 +154,11 @@ export default function Lobby() {
     };
 
     const handleRestartGame = async (e) => {
+        e.preventDefault();
         if (!gameContract) return;
 
+        socket.emit('transacting', { roomId });
         try {
-            setGameStatus('PENDING')
             const tx = await gameContract.restartGame();
             await tx.wait();
 
@@ -330,6 +331,11 @@ export default function Lobby() {
             setGameWinner(null);
         });
 
+        newSocket.on('transacting', data => {
+            setGameStatus('PENDING');
+            return;
+        });
+
         return () => {
             newSocket.close()
             setSocket(null);
@@ -387,7 +393,7 @@ export default function Lobby() {
                                 </>
                             ) : (
                                 <>
-                                    <button onClick={e => handleLeaveRoom(e)}>Leave Room</button>
+                                    <button disabled={gameStatus === 'PENDING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
                                 </>
                             )}
                             {gameStatus === 'READY' && (
