@@ -209,7 +209,7 @@ function handleRestartGame(socket, data) {
 
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
-        message: `Game has been successfully restarted. ${nextPlayer.slice(0, 8)} moves first`,
+        message: `Game has been successfully restarted. ${nextPlayer.slice(0, 8)} moves first.`,
         timestampe: Date.now()
     });
-}
+};

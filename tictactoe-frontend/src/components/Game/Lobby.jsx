@@ -284,7 +284,10 @@ export default function Lobby() {
         });
 
         newSocket.on('restartGame', data => {
-
+            const { nextPlayer } = data;
+            const newBoard = boardRef.current.map(() => Array(3).fill(0));
+            setBoard(newBoard);
+            setTurn(nextPlayer);
         });
 
         return () => {
