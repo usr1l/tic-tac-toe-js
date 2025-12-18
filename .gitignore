@@ -1,4 +1,8 @@
 .notes.md
+node_modules
+artifacts
+cache
+.env
 
 # Logs
 logs
