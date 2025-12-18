@@ -7,10 +7,12 @@ import Game from './Game';
 import "./Chat.css";
 
 const SOCKET_SERVER_URL = "http://localhost:5001";
+const BOARD = Array(3).fill(null).map(() => Array(3).fill(0));
 
 export default function Lobby() {
     const { walletAddress, factoryContract, walletConnected, signer } = useWalletProvider();
 
+    const [ board, setBoard ] = useState(BOARD);
     const [ isLoaded, setIsLoaded ] = useState(false);
     const [ socket, setSocket ] = useState(null);
     const [ creatorAddress, setCreatorAddress ] = useState(null);
@@ -29,12 +31,13 @@ export default function Lobby() {
     // using this useref to help with keeping refs to states, or else the websockets useffect
     // will only get references stale variables, as it doesn't update
     // adding variables to the reference array causes the useeffect to rerender multiple times,
-    // not the desired effects i wanted.
+    // not the desired effects i
     const signerRef = useRef(signer);
     const creatorRef = useRef(creatorAddress);
     const roomIdRef = useRef(roomId);
     const opponentRef = useRef(opponentAddress);
     const turnRef = useState(turn);
+    const boardRef = useState(board);
 
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
@@ -94,6 +97,15 @@ export default function Lobby() {
             // extract the newly created game address
 
             const newGameAddress = gameCreatedEvent.args[ 0 ];
+
+            if (gameCreatedEvent.args[ 1 ] !== creatorAddress || gameCreatedEvent.args[ 2 ] !== opponentAddress) {
+                addChatMessage({
+                    sender: 'SYSTEM',
+                    message: 'Wallet addresses do not match the deployed contract',
+                    timestamp: Date.now
+                })
+            };
+
             socket.emit('deploySuccess', { roomId, newGameAddress });
         } catch (e) {
             console.error("Game Start Error:", error);
@@ -114,17 +126,21 @@ export default function Lobby() {
             // this waits for the transaction to be mined
             await tx.wait();
 
-            socket.emit('moveSuccess', { roomId, r, c, walletAddress });
-            setTurn(turn === creatorAddress ? opponentAddress : creatorAddress);
-            setGameStatus('ACTIVE');
-            return true;
+            const nextPlayer = await gameContract.nextPlayer();
+            const board = await gameContract.getBoardState();
+            const newBoard = board.map(row => {
+                row.map(cell => Number(cell));
+            });
+            socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard });
+            // setTurn(turn === creatorAddress ? opponentAddress : creatorAddress);
+            // setGameStatus('ACTIVE');
+            // return true;
         } catch (e) {
             console.log("error: ", e);
             socket.emit('moveFail', { roomId });
             setGameStatus('ACTIVE');
             return false;
         };
-
     };
 
     useEffect(() => {
@@ -132,7 +148,8 @@ export default function Lobby() {
         creatorRef.current = creatorAddress;
         opponentRef.current = opponentAddress;
         turnRef.current = turn;
-        roomId.current = roomId
+        roomIdRef.current = roomId;
+        boardRef.current = board;
     }, [ signer, creatorAddress, opponentAddress, turn, roomId ]);
 
     useEffect(() => {
@@ -184,7 +201,7 @@ export default function Lobby() {
             const { joiner, roomId, creator } = data;
             setOpponentAddress(joiner);
 
-            if (!creatorAddress.current) setCreatorAddress(creator);
+            if (!creatorRef.current) setCreatorAddress(creator);
             if (!roomIdRef.current) setRoomId(roomId);
             setGameStatus('READY');
             return;
@@ -203,7 +220,7 @@ export default function Lobby() {
 
         newSocket.on('deploySuccess', data => {
 
-            const { newGameAddress, creator } = data;
+            const { newGameAddress } = data;
 
             const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signerRef.current);
             const message = {
@@ -220,8 +237,16 @@ export default function Lobby() {
             return;
         });
 
-        newSocket.on('moveSuccess', ({ roomId, r, c }) => {
-
+        newSocket.on('moveSuccess', data => {
+            const { nextPlayer, newBoard } = data;
+            const updatedBoard = boardRef.current.map(row => [ ...row ]);
+            for (row in board) {
+                for (col in row) {
+                    updatedBoard[ row ][ col ] = newBoard[ row ][ col ];
+                }
+            };
+            setTurn(nextPlayer);
+            setBoard(updatedBoard);
         });
 
         return () => {
@@ -234,7 +259,17 @@ export default function Lobby() {
 
     return (
         <>
-            {(gameContract && turn) && (<Game handleMakeMove={handleMakeMove} gameStatus={gameStatus} turn={turn} />)}
+            {(gameContract && turn) && (
+                <Game
+                    handleMakeMove={handleMakeMove}
+                    gameStatus={gameStatus}
+                    turn={turn}
+                    opponentAddress={opponentAddress}
+                    creatorAddress={creatorAddress}
+                    board={board}
+                    setBoard={setBoard}
+                />
+            )}
             {isLoaded && (
                 <div className='chat-container'>
                     <div className='chat-header'>Game Chat</div>

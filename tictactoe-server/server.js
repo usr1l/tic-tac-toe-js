@@ -170,7 +170,7 @@ function handleDeploySuccess(socket, data) {
     const { roomId, newGameAddress } = data;
     rooms[ roomId ].gameContractAddress = newGameAddress;
 
-    io.to(roomId).emit('deploySuccess', { newGameAddress, creator: rooms[ roomId ].creator });
+    io.to(roomId).emit('deploySuccess', { newGameAddress });
 };
 
 function handleSubmitMove(socket, data) {
@@ -192,8 +192,8 @@ function handleMoveFail(socket, data) {
 };
 
 function handleMoveSuccess(socket, data) {
-    const { r, c, roomId, walletAddress } = data;
-    io.to(roomId).emit('moveSuccess', { roomId, r, c });
+    const { r, c, roomId, walletAddress, nextPlayer, newBoard } = data;
+    io.to(roomId).emit('moveSuccess', { walletAddress, nextPlayer, newBoard });
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
         message: `[SYSTEM]: Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
