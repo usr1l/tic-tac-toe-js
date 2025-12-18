@@ -1,0 +1,111 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "gameAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "playerX",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "playerO",
+						"type": "address"
+					}
+				],
+				"name": "GameCreated",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address payable",
+						"name": "_playerO",
+						"type": "address"
+					}
+				],
+				"name": "createNewGame",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "deployedGames",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/TicTacToeFactory.sol": "TicTacToeFactory"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/TicTacToe.sol": {
+			"keccak256": "0x21a521c4d6aad3646d0eea0cb7f07ee9ad4aad10cf514f3221140288f27c81e0",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://dab9958fada6263e9f057b777a8a79e14cb5298b7fa86ff5ca20c13f18eb0b10",
+				"dweb:/ipfs/QmVApwh5LtAEvx2Wy5rgR75muxAaQBfvCoMaGdsCxapyyB"
+			]
+		},
+		"contracts/TicTacToeFactory.sol": {
+			"keccak256": "0x66d41d36c2fe2bc9d7f952e857a59fff9789773f5e73e5dcf07cffe4fb2f1ca6",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://cf6b2496356216a62167f320b134e85cdf9254524299defbb43a308e2e668ca6",
+				"dweb:/ipfs/QmXZbtNCuB1ZjAEnBER7qgfJKgGZdgpynmMNrk2aBrUfmM"
+			]
+		}
+	},
+	"version": 1
+}
