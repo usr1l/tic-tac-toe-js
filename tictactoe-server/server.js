@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
 
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 const REACT_ORIGIN = "http://localhost:5173";
 // const REACT_ORIGIN = "http://localhost:4173";
 const isProduction = process.env.NODE_ENV === "production";
@@ -16,7 +16,10 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(express.json());
-app.use(cors({ origin: REACT_ORIGIN }));
+app.use(cors({
+    origin: process.env.FRONTEND_URL || REACT_ORIGIN,
+    METHODS: [ "GET", "POST" ]
+}));
 
 // if (!isProduction) {
 // } else {

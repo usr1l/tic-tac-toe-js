@@ -6,7 +6,7 @@ import { useWalletProvider } from '../../context/useWalletProvider';
 import Game from './Game';
 import "./Chat.css";
 
-const SOCKET_SERVER_URL = "http://localhost:5001";
+const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(0));
 
 export default function Lobby() {
@@ -345,70 +345,83 @@ export default function Lobby() {
 
     return (
         <>
-            {(gameContract && turn) && (
-                <Game
-                    handleMakeMove={handleMakeMove}
-                    gameStatus={gameStatus}
-                    turn={turn}
-                    creatorAddress={creatorAddress}
-                    board={board}
-                    opponentAddress={opponentAddress}
-                    gameWinner={gameWinner}
-                    handleRestartGame={handleRestartGame}
-                />
-            )}
-            {isLoaded && (
-                <div className='chat-container'>
-                    <div className='chat-header'>Game Chat</div>
-                    <div className='chat-window'>
-                        {chatHistory.map(({ sender, message, timestamp }, index) => (
-                            <div key={sender + timestamp + index}>{message}</div>
-                        ))}
-                    </div>
-                    <div className='input-field'>
-                        <form id="chat-message-form">
-                            <input
-                                id="chat-message-input"
-                                type="text"
-                                value={chatMessage}
-                                placeholder='Type a message here...'
-                                onChange={e => setChatMessage(e.target.value)}
-                            ></input>
-                            <button onClick={e => handleSend(e)}>Send</button>
-                        </form>
-                    </div>
-                    {walletConnected && (
-                        <div>
-                            {gameStatus === 'LOBBY' ? (
-                                <>
-                                    <button onClick={e => handleCreateRoom(e)}>Create Room</button>
-                                    <input
-                                        type='text'
-                                        value={joinRoom}
-                                        placeholder='Room Number'
-                                        onChange={e => setJoinRoom(e.target.value)}
-                                    ></input>
-                                    <button onClick={e => handleJoinRoom(e)}>Join Room</button>
-                                </>
-                            ) : (
-                                <>
-                                    <button disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
-                                </>
-                            )}
-                            {gameStatus === 'READY' && (
-                                <>
-                                    <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
-                                </>
-                            )}
-                            {gameStatus === 'PENDING' && (
-                                <>
-                                    <button disabled={true}>Game is starting ...</button>
-                                </>
-                            )}
+            <div className='lobby-page-wrapper'>
+                <div className='main-arena'>
+                    <div className='game-section'></div>
+                    {(gameContract && turn) ? (
+                        <Game
+                            handleMakeMove={handleMakeMove}
+                            gameStatus={gameStatus}
+                            turn={turn}
+                            creatorAddress={creatorAddress}
+                            board={board}
+                            opponentAddress={opponentAddress}
+                            gameWinner={gameWinner}
+                            handleRestartGame={handleRestartGame}
+                        />
+                    ) : (
+                        <div className="placeholder-board">
+                            <h2>Waiting to Join or Create a Room...</h2>
                         </div>
                     )}
+                    <div className='chat-section'>
+                        {isLoaded && (
+                            <div className='chat-container'>
+                                <div className='chat-header'>Game Chat</div>
+                                <div className='chat-window'>
+                                    {chatHistory.map(({ sender, message, timestamp }, index) => (
+                                        <div key={sender + timestamp + index}>{message}</div>
+                                    ))}
+                                </div>
+                                <div className='input-field'>
+                                    {gameStatus !== 'LOBBY' && (
+                                        <div id="chat-message-form">
+                                            <input
+                                                id="chat-message-input"
+                                                type="text"
+                                                value={chatMessage}
+                                                placeholder='Type a message here...'
+                                                onChange={e => setChatMessage(e.target.value)}
+                                            ></input>
+                                            <button onClick={e => handleSend(e)}>Send</button>
+                                        </div>
+                                    )}
+                                </div>
+                                {walletConnected && (
+                                    <div>
+                                        {gameStatus === 'LOBBY' ? (
+                                            <>
+                                                <button onClick={e => handleCreateRoom(e)}>Create Room</button>
+                                                <input
+                                                    type='text'
+                                                    value={joinRoom}
+                                                    placeholder='Room Number'
+                                                    onChange={e => setJoinRoom(e.target.value)}
+                                                ></input>
+                                                <button onClick={e => handleJoinRoom(e)}>Join Room</button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
+                                            </>
+                                        )}
+                                        {gameStatus === 'READY' && (
+                                            <>
+                                                <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
+                                            </>
+                                        )}
+                                        {gameStatus === 'PENDING' && (
+                                            <>
+                                                <button disabled={true}>Game is starting ...</button>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
-            )}
+            </div>
 
         </>
     );
