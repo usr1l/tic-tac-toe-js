@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const { Server } = require('socket.io');
 const crypto = require('crypto');
-const { timeStamp } = require('console');
 
 const PORT = 5001;
 const REACT_ORIGIN = "http://localhost:5173";
@@ -48,7 +47,15 @@ io.on('connection', socket => {
     socket.on('moveSuccess', data => handleMoveSuccess(socket, data));
     socket.on('restartGame', data => handleRestartGame(socket, data));
     socket.on('leaveRoom', data => handleLeaveRoom(socket, data));
-
+    socket.on('disconnecting', () => {
+        const joinedRooms = Array.from(socket.rooms);
+        const gameRoomId = joinedRooms.find(id => rooms[ id ]);
+        if (gameRoomId) {
+            const room = rooms[ gameRoomId ];
+            const isCreator = room.creatorSocketId === socket.id;
+            handleLeaveRoom(socket, { roomId: gameRoomId, isCreator });
+        }
+    });
     // socket.on('disconnect', () => {
     //     // for later
     // })
@@ -112,6 +119,15 @@ function handleJoinRoom(socket, data) {
         return socket.emit('joinError', { message: `Room ${roomId} not available.` });
     }
 
+    if (room.creator && room.joiner) {
+        io.to(socket.id).emit('announcement', {
+            sender: 'SYSTEM',
+            message: 'Join failed. Room is full.',
+            timestamp: Date.now()
+        });
+        return;
+    }
+
     room.joiner = userAddress;
     room.status = 'READY';
     room.joinerSocketId = socket.id;
@@ -134,7 +150,7 @@ function handleStartGame(socket, data) {
     room.status = 'PENDING';
     const message = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Creating a smart contract...`;
     io.to(roomId).emit('creatingGame');
-    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timeStamp: Date.now() })
+    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timestamp: Date.now() })
 }
 
 function handleChatMessage(socket, data) {
@@ -219,24 +235,39 @@ function handleRestartGame(socket, data) {
 function handleLeaveRoom(socket, data) {
     const { roomId, isCreator } = data;
     const room = rooms[ roomId ];
-    if (!isCreator) {
+
+    if (!room) return;
+
+    if (isCreator) {
+        if (!room.joiner) {
+            delete rooms[ roomId ];
+        } else {
+            room.creator = room.joiner;
+            room.joiner = null;
+            room.creatorSocketId = room.joinerSocketId;
+            room.joinerSocketId = null;
+            room.gameContractAddress = null;
+            room.status = 'WAITING';
+            io.to(room.creatorSocketId).emit('creatorLeft');
+            io.to(room.creatorSocketId).emit('announcement', {
+                sender: 'SYSTEM',
+                message: 'Room owner has left. You are the new owner.'
+            });
+        };
+    } else if (!isCreator) {
         room.joiner = null;
         room.joinerSocketId = null;
         room.gameContractAddress = null;
         room.status = 'WAITING';
-        io.to(roomId).emit('joinerLeft');
-        io.to(roomId).emit('announcement', {
+        io.to(room.creatorSocketId).emit('joinerLeft');
+        io.to(room.creatorSocketId).emit('announcement', {
             sender: 'SYSTEM',
-            message: 'Opponent has left the room',
+            message: 'Opponent has left the room.',
             timestamp: Date.now()
         });
     };
 
-    if (isCreator) {
-        room.creator = room.joiner;
-        room.joiner = null;
-        room.creatorSocketId = room.joinerSocketId;
-        room.joinerSocketId = null;
-    }
+    socket.leave(roomId);
+    io.emit('roomListUpdate', Object.values(rooms));
 
 };

@@ -233,6 +233,7 @@ export default function Lobby() {
             const { roomId, creator } = data;
             setRoomId(roomId);
             setCreatorAddress(creator);
+            setGameStatus('WAITING');
             return;
         });
 
@@ -310,6 +311,25 @@ export default function Lobby() {
             setGameStatus('ACTIVE');
         });
 
+        newSocket.on('joinerLeft', data => {
+            setOpponentAddress(null);
+            setGameAddress(null);
+            setGameContract(null);
+            setGameStatus('WAITING');
+            setBoard(BOARD);
+            setGameWinner(null);
+        });
+
+        newSocket.on('creatorLeft', data => {
+            setCreatorAddress(opponentRef.current);
+            setOpponentAddress(null);
+            setGameAddress(null);
+            setGameContract(null);
+            setGameStatus('WAITING');
+            setBoard(BOARD);
+            setGameWinner(null);
+        });
+
         return () => {
             newSocket.close()
             setSocket(null);
@@ -349,12 +369,12 @@ export default function Lobby() {
                                 placeholder='Type a message here...'
                                 onChange={e => setChatMessage(e.target.value)}
                             ></input>
-                            <button onClick={handleSend}>Send</button>
+                            <button onClick={e => handleSend(e)}>Send</button>
                         </form>
                     </div>
                     {walletConnected && (
                         <div>
-                            {gameStatus === 'LOBBY' && (
+                            {gameStatus === 'LOBBY' ? (
                                 <>
                                     <button onClick={e => handleCreateRoom(e)}>Create Room</button>
                                     <input
@@ -363,18 +383,16 @@ export default function Lobby() {
                                         placeholder='Room Number'
                                         onChange={e => setJoinRoom(e.target.value)}
                                     ></input>
-                                    <button onClick={handleJoinRoom}>Join Room</button>
-                                    {/* <button className="restart" onClick={restart} >Restart</button> */}
+                                    <button onClick={e => handleJoinRoom(e)}>Join Room</button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={e => handleLeaveRoom(e)}>Leave Room</button>
                                 </>
                             )}
                             {gameStatus === 'READY' && (
                                 <>
                                     <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
-                                </>
-                            )}
-                            {gameStatus !== 'LOBBY' && (
-                                <>
-                                    <button onClick={e => handleLeaveRoom(e)} >Leave Room</button>
                                 </>
                             )}
                             {gameStatus === 'PENDING' && (

@@ -62,7 +62,7 @@ function Board({
         <div className="game-board">
             <h2>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h2>
             <label style={{ height: "40px", color: "red" }}>{errMessage || move}</label>
-            {board.map((row, i) => (
+            {board?.map((row, i) => (
                 <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
                         <Square
