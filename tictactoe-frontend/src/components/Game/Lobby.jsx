@@ -138,7 +138,6 @@ export default function Lobby() {
 
             if (isGameOver) {
                 winner = await gameContract.winner();
-                setGameStatus('ENDED')
             };
 
             socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard, winner });
@@ -281,6 +280,7 @@ export default function Lobby() {
             };
 
             setGameWinner(winner);
+            setGameStatus('ENDED');
         });
 
         newSocket.on('restartGame', data => {
@@ -288,6 +288,8 @@ export default function Lobby() {
             const newBoard = boardRef.current.map(() => Array(3).fill(0));
             setBoard(newBoard);
             setTurn(nextPlayer);
+            setGameWinner(null);
+            setGameStatus('ACTIVE');
         });
 
         return () => {
