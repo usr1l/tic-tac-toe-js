@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { TICTACTOE_ABI } from '../../config';
 import { io } from 'socket.io-client';
+import { ethers } from 'ethers';
 import { useWalletProvider } from '../../context/useWalletProvider';
 import Game from './Game';
 import "./Chat.css";
-import { ethers } from 'ethers';
-import { TICTACTOE_ABI } from '../../config';
 
 const SOCKET_SERVER_URL = "http://localhost:5001";
 
@@ -26,6 +26,15 @@ export default function Lobby() {
     const [ chatMessage, setChatMessage ] = useState('');
     const [ chatHistory, setChatHistory ] = useState([]);
 
+    // using this useref to help with keeping refs to states, or else the websockets useffect
+    // will only get references stale variables, as it doesn't update
+    // adding variables to the reference array causes the useeffect to rerender multiple times,
+    // not the desired effects i wanted.
+    const signerRef = useRef(signer);
+    const creatorRef = useRef(creatorAddress);
+    const roomIdRef = useRef(roomId);
+    const opponentRef = useRef(opponentAddress);
+    const turnRef = useState(turn);
 
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
@@ -99,26 +108,32 @@ export default function Lobby() {
         };
         setGameStatus('PENDING');
         socket.emit('submitMove', { roomId, r, c, walletAddress });
-
         try {
             // this waits for the preinstantiated contract
             const tx = await gameContract.makeMove(r, c);
             // this waits for the transaction to be mined
             await tx.wait();
 
-            socket.emit('')
+            socket.emit('moveSuccess', { roomId, r, c, walletAddress });
+            setTurn(turn === creatorAddress ? opponentAddress : creatorAddress);
+            setGameStatus('ACTIVE');
+            return true;
         } catch (e) {
             console.log("error: ", e);
-            addChatMessage({
-                sender: 'SYSTEM',
-                message: '[SYSTEM]: Transaction failed, please try again.',
-                timestamp: Date.now()
-            });
+            socket.emit('moveFail', { roomId });
+            setGameStatus('ACTIVE');
+            return false;
         };
 
-        setGameStatus('ACTIVE');
-        return;
     };
+
+    useEffect(() => {
+        signerRef.current = signer;
+        creatorRef.current = creatorAddress;
+        opponentRef.current = opponentAddress;
+        turnRef.current = turn;
+        roomId.current = roomId
+    }, [ signer, creatorAddress, opponentAddress, turn, roomId ]);
 
     useEffect(() => {
         if (!socket) (setIsLoaded(false));
@@ -145,84 +160,81 @@ export default function Lobby() {
     }, [ walletConnected ]);
 
     useEffect(() => {
-        const newSocket = io.connect(SOCKET_SERVER_URL);
-        setSocket(newSocket);
-
-        newSocket.on('newMessage', data => {
-            addChatMessage(data);
-        });
+        const newSocket = io.connect(SOCKET_SERVER_URL)
+        if (newSocket) setSocket(newSocket);
 
         newSocket.on('announcement', data => {
             addChatMessage(data);
+            return;
         });
 
         newSocket.on('roomCreated', data => {
             const { roomId, creator } = data;
             setRoomId(roomId);
             setCreatorAddress(creator);
+            return;
         });
 
         newSocket.on('creatingGame', data => {
             setGameStatus('PENDING');
-            addChatMessage(data);
+            return;
         });
 
         newSocket.on('opponentJoinedRoom', data => {
             const { joiner, roomId, creator } = data;
             setOpponentAddress(joiner);
 
-            if (!creator) setCreatorAddress(creator);
-            if (!roomId) setRoomId(roomId);
+            if (!creatorAddress.current) setCreatorAddress(creator);
+            if (!roomIdRef.current) setRoomId(roomId);
             setGameStatus('READY');
+            return;
         });
 
         newSocket.on('joinError', data => {
             const { message } = data;
             alert(message);
+            return;
         })
 
         newSocket.on('deployFail', data => {
-            addChatMessage(data);
             setGameStatus('READY');
+            return;
         });
 
-        newSocket.on('deploySuccess', async data => {
+        newSocket.on('deploySuccess', data => {
 
-            const { newGameAddress } = data;
+            const { newGameAddress, creator } = data;
 
-            const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signer);
+            const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signerRef.current);
             const message = {
                 sender: 'SYSTEM',
                 message: `[SYSTEM]: Contract deployment success, game has started ...`,
                 timestamp: Date.now()
-            }
-            setGameContract(newGameInstance);
-            setGameAddress(newGameAddress);
-            setTurn(creatorAddress);
+            };
+
+            setTurn(creatorRef.current);
             setGameStatus('ACTIVE');
+            setGameAddress(newGameAddress);
+            setGameContract(newGameInstance);
             addChatMessage(message);
+            return;
         });
 
-        newSocket.on('movePending', data => {
-            const { r, c, walletAddress } = data
-            const message = {
-                sender: 'SYSTEM',
-                message: `${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}, waiting for transaction to be validated by the blockchain ...)`,
-                timestamp: Date.now()
-            };
-            addChatMessage(message);
+        newSocket.on('moveSuccess', ({ roomId, r, c }) => {
+
         });
 
         return () => {
-            setSocket(null);
             newSocket.close()
-        };
+            setSocket(null);
+        }
+
         // usecallback for setChatHistory gives us a custom setter for better readibility, add the variables defined outside useffect into the dependency array
     }, [ addChatMessage ]);
 
     return (
         <>
-            {gameContract && (<Game handleMakeMove={handleMakeMove} gameStatus={gameStatus} turn={turn} />)}
+            {(gameContract && turn) && (<Game handleMakeMove={handleMakeMove} gameStatus={gameStatus} turn={turn} />)}
             {isLoaded && (
                 <div className='chat-container'>
                     <div className='chat-header'>Game Chat</div>

@@ -21,12 +21,13 @@ function Board({ handleMakeMove, gameStatus, turn }) {
     const handleTileClick = (e, r, c) => {
         e.preventDefault();
         if (gameStatus !== 'ACTIVE' || walletAddress !== turn) {
+            console.log('GAME STATUS: ', gameStatus)
+            console.log('TURN: ', turn)
             setErrMessage("It is not your turn");
             return;
         };
 
-        const newBoard = board.map(row => [ ...row ]);
-        if (newBoard[ r ][ c ] !== null) {
+        if (board[ r ][ c ] !== null) {
             setErrMessage("Space is already taken.");
             return;
         };
@@ -41,16 +42,20 @@ function Board({ handleMakeMove, gameStatus, turn }) {
 
     const handleMoveSubmit = async (e) => {
         e.preventDefault();
-        try {
-            await handleMakeMove(row, col);
-        } catch (e) {
-            console.log('error: ', e);
+        const success = await handleMakeMove(row, col);
+
+        if (success) {
+            const newBoard = board.map(r => [ ...r ]);
+            newBoard[ row ][ col ] = symbol;
+            setBoard(newBoard);
+            symbol === PLAYER_X ? setSymbol(PLAYER_O) : setSymbol(PLAYER_X);
         };
 
-        // newBoard[ r ][ c ] = symbol;
-        // setBoard(newBoard);
-        // setErrMessage("");
-        // symbol === PLAYER_X ? setSymbol(PLAYER_O) : setSymbol(PLAYER_X);
+        setMove('');
+        setErrMessage('');
+        setRow(null);
+        setCol(null);
+        return;
     };
 
     return (
@@ -68,13 +73,13 @@ function Board({ handleMakeMove, gameStatus, turn }) {
                     ))}
                 </div>
             ))}
-            <button disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn} onClick={handleMoveSubmit}>Submit Move</button>
+            <button disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn} onClick={e => handleMoveSubmit(e)}>Submit Move</button>
         </div>
     )
 }
 
-export default function Game({ handleMakeMove, turn }) {
-    const { walletAddress, signer, factoryContract, walletConnected } = useWalletProvider();
+export default function Game({ handleMakeMove, turn, gameStatus }) {
+    const { walletAddress, walletConnected } = useWalletProvider();
     return (
         <div className="lobby-container">
             <div className="game">
@@ -83,7 +88,7 @@ export default function Game({ handleMakeMove, turn }) {
                     <div>Player 1: {walletAddress.slice(0, 8)}...</div>
                 </div>
                 {walletConnected ? (
-                    <Board handleMakeMove={handleMakeMove} turn={turn} />
+                    <Board handleMakeMove={handleMakeMove} turn={turn} gameStatus={gameStatus} />
                 ) : (
                     <div>Select a wallet from above</div>
                 )}

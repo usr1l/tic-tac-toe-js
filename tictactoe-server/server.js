@@ -43,8 +43,9 @@ io.on('connection', socket => {
     socket.on('chatMessage', data => handleChatMessage(socket, data));
     socket.on('deployFail', data => handleDeployFail(socket, data));
     socket.on('deploySuccess', data => handleDeploySuccess(socket, data));
-    socket.on('submitMove', data = handleSubmitMove(socket, data));
-    socket.on()
+    socket.on('submitMove', data => handleSubmitMove(socket, data));
+    socket.on('moveFail', data => handleMoveFail(socket, data));
+    socket.on('moveSuccess', data => handleMoveSuccess(socket, data));
 
     // socket.on('disconnect', () => {
     //     // for later
@@ -130,7 +131,8 @@ function handleStartGame(socket, data) {
 
     room.status = 'PENDING';
     const message = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Creating a smart contract...`;
-    io.to(roomId).emit('creatingGame', { sender: 'SYSTEM', message, timeStamp: Date.now() });
+    io.to(roomId).emit('creatingGame');
+    io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timeStamp: Date.now() })
 }
 
 function handleChatMessage(socket, data) {
@@ -140,13 +142,13 @@ function handleChatMessage(socket, data) {
     // check for if sender is in the room
     if (socket.id !== rooms[ roomId ].creatorSocketId && socket.id !== rooms[ roomId ].joinerSocketId) {
         return;
-    }
+    };
 
-    io.to(roomId).emit('newMessage', {
+    io.to(roomId).emit('announcement', {
         sender: sender,
         message: message,
         timestamp: Date.now(),
-    })
+    });
 }
 
 function handleDeployFail(socket, data) {
@@ -155,8 +157,9 @@ function handleDeployFail(socket, data) {
         return;
     };
 
-    io.to(roomId).emit('deployFail', {
-        sender: '[SYSTEM]',
+    io.to(roomId).emit('deployFail');
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
         message: "[ERROR]: Contract deployment failed. Please try again.",
         timestamp: Date.now()
     });
@@ -167,10 +170,33 @@ function handleDeploySuccess(socket, data) {
     const { roomId, newGameAddress } = data;
     rooms[ roomId ].gameContractAddress = newGameAddress;
 
-    io.to(roomId).emit('deploySuccess', { newGameAddress });
+    io.to(roomId).emit('deploySuccess', { newGameAddress, creator: rooms[ roomId ].creator });
 };
 
 function handleSubmitMove(socket, data) {
     const { roomId, r, c, walletAddress } = data;
-    io.to(roomId).emit('movePending', { r, c, walletAddress });
-}
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: `[SYSTEM]: ${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}), waiting for transaction to be validated by the blockchain ...`,
+        timestamp: Date.now()
+    });
+};
+
+function handleMoveFail(socket, data) {
+    const { roomId } = data;
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: '[SYSTEM]: Transaction failed, please try again.',
+        timestamp: Date.now()
+    })
+};
+
+function handleMoveSuccess(socket, data) {
+    const { r, c, roomId, walletAddress } = data;
+    io.to(roomId).emit('moveSuccess', { roomId, r, c });
+    io.to(roomId).emit('announcement', {
+        sender: 'SYSTEM',
+        message: `[SYSTEM]: Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
+        timestamp: Date.now()
+    });
+};
