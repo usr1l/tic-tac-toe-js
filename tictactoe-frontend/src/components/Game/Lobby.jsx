@@ -150,7 +150,7 @@ export default function Lobby() {
         turnRef.current = turn;
         roomIdRef.current = roomId;
         boardRef.current = board;
-    }, [ signer, creatorAddress, opponentAddress, turn, roomId ]);
+    }, [ signer, creatorAddress, opponentAddress, turn, roomId, board ]);
 
     useEffect(() => {
         if (!socket) (setIsLoaded(false));
@@ -241,7 +241,7 @@ export default function Lobby() {
             const { nextPlayer, newBoard } = data;
             const updatedBoard = boardRef.current.map(row => [ ...row ]);
             for (row in updatedBoard) {
-                for (col in row) {
+                for (col in updatedBoard[ row ]) {
                     updatedBoard[ row ][ col ] = newBoard[ row ][ col ];
                 }
             };
