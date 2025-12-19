@@ -18,15 +18,10 @@ const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cors({
-    origin: process.env.FRONTEND_URL || REACT_ORIGIN,
+    origin: process.env.NETLIFY_URL || REACT_ORIGIN,
     METHODS: [ "GET", "POST" ]
 }));
 
-// if (!isProduction) {
-// } else {
-//     // need to fix this later
-//     app.use(cors({ origin: "*" }));
-// };
 
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
@@ -34,7 +29,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: REACT_ORIGIN,
+        origin: process.env.NETLIFY_URL || REACT_ORIGIN,
         methods: [ "GET", "POST" ],
     }
 });
