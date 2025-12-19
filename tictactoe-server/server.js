@@ -18,8 +18,8 @@ const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cors({
-    origin: process.env.NETLIFY_URL || REACT_ORIGIN,
-    METHODS: [ "GET", "POST" ]
+    origin: "https://tictactoe-smartcontract.netlify.app" || process.env.NETLIFY_URL || REACT_ORIGIN,
+    methods: [ "GET", "POST" ]
 }));
 
 
@@ -29,7 +29,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: process.env.NETLIFY_URL || REACT_ORIGIN,
+        origin: "https://tictactoe-smartcontract.netlify.app" || process.env.NETLIFY_URL || REACT_ORIGIN,
         methods: [ "GET", "POST" ],
     }
 });
