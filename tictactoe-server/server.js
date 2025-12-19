@@ -9,7 +9,8 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 5001;
 const REACT_ORIGIN = "http://localhost:5173";
 // const REACT_ORIGIN = "http://localhost:4173";
-const isProduction = process.env.NODE_ENV === "production";
+// const isProduction = process.env.NODE_ENV === "production";
+
 const rooms = {};
 
 const app = express();
@@ -17,15 +18,10 @@ const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cors({
-    origin: process.env.FRONTEND_URL || REACT_ORIGIN,
+    origin: process.env.NETLIFY_URL || REACT_ORIGIN,
     METHODS: [ "GET", "POST" ]
 }));
 
-// if (!isProduction) {
-// } else {
-//     // need to fix this later
-//     app.use(cors({ origin: "*" }));
-// };
 
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
@@ -33,7 +29,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: REACT_ORIGIN,
+        origin: process.env.NETLIFY_URL || REACT_ORIGIN,
         methods: [ "GET", "POST" ],
     }
 });
@@ -85,7 +81,7 @@ io.on('connection', socket => {
 
 // });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Lobby server listening on ${PORT}`);
 });
 
