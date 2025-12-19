@@ -9,7 +9,6 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 5001;
 const REACT_ORIGIN = "http://localhost:5173";
 // const REACT_ORIGIN = "http://localhost:4173";
-// const isProduction = process.env.NODE_ENV === "production";
 
 const rooms = {};
 
@@ -25,7 +24,6 @@ app.use(cors({
 
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
-// create the http server to wrap with scoket.io
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -56,38 +54,11 @@ io.on('connection', socket => {
             handleLeaveRoom(socket, { roomId: gameRoomId, isCreator });
         }
     });
-    // socket.on('disconnect', () => {
-    //     // for later
-    // })
 })
-
-// // Error formatter
-// app.use((err, _req, res, _next) => {
-//     res.status(err.status || 500);
-//     console.error(err);
-//     res.json({
-//         // title: err.title || 'Server Error',
-//         message: err.message,
-//         statusCode: err.status,
-//         errors: err.errors,
-//         stack: isProduction ? null : err.stack
-//     });
-// });
-
-
-// app.get('/', (req, res) => {
-//     // res.send("TicTacToe lobby connected.");
-//     console.log("this prints")
-
-// });
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Lobby server listening on ${PORT}`);
 });
-
-// app.listen(5000, () => {
-//     console.log(`Lobby socketIo server listening on port ${PORT}`);
-// });
 
 function handleCreateRoom(socket, data) {
     const roomId = crypto.randomBytes(3).toString('hex');

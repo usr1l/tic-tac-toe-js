@@ -142,9 +142,6 @@ export default function Lobby() {
             };
 
             socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard, winner });
-            // setTurn(turn === creatorAddress ? opponentAddress : creatorAddress);
-            // setGameStatus('ACTIVE');
-            // return true;
         } catch (e) {
             console.log("error: ", e);
             socket.emit('moveFail', { roomId });
