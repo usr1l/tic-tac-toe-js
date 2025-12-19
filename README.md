@@ -37,7 +37,7 @@ To participate in a match, ensure you have the **MetaMask** extension installed 
 1.  **The Handshake:** The room creator initiates the **Smart Contract Deployment**. You must sign the transaction to deploy your specific game instance to the blockchain.
 2.  **Taking a Turn:** Click any empty square. This initiates a `makeMove` transaction via Ethers.js.
 3.  **Real-Time Sync:** While the block is mining, the UI will enter a **"Transacting"** state via Sockets to notify your opponent.
-4.  **Finality:** Once the transaction is confirmed, the board updates globally. The first player to align three symbols triggers the `claimVictory` logic to finalize the match result on-chain.
+4.  **Finality:** Once the transaction is confirmed, the board updates globally.
 
 ## 🏗️ Technical Architecture
 
