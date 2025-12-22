@@ -40,6 +40,12 @@ export default function Lobby() {
     const turnRef = useState(turn);
     const boardRef = useState(board);
 
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
         setChatHistory(prev => [ ...prev, messageObj ]);
@@ -224,6 +230,10 @@ export default function Lobby() {
     }, [ walletConnected ]);
 
     useEffect(() => {
+        scrollToBottom();
+    }, [ chatHistory ]);
+
+    useEffect(() => {
         const newSocket = io.connect(SOCKET_SERVER_URL)
         if (newSocket) setSocket(newSocket);
 
@@ -380,60 +390,84 @@ export default function Lobby() {
                                         <p className={`message message-${sender === 'SYSTEM' ? 'system' : sender === walletAddress ? 'self' : 'opponent'}`}>{message}</p>
                                     </div>
                                 ))}
+                                <div ref={messagesEndRef} />
                             </div>
                             <div className='input-field'>
                                 {gameStatus !== 'LOBBY' && (
-                                    <div id="chat-message-form" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around',width: '100%', height: '100%' }}>
+                                    <div id="chat-message-form" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', width: '100%', height: '100%' }}>
                                         <input
                                             id="chat-message-input"
                                             type="text"
                                             value={chatMessage}
                                             placeholder='Type a message here...'
                                             onChange={e => setChatMessage(e.target.value)}
-                                            style={{style: 'unset', height: '30px', width: '60%'}}
+                                            style={{ style: 'unset', height: '20px', padding: '7px', width: '55%', borderRadius: '5px' }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    if (chatMessage.length > 255) return alert("Message cannot exceed 255 characters.");
+                                                    socket.emit("chatMessage", { roomId, sender: walletAddress, message: chatMessage });
+                                                    setChatMessage("");
+                                                };
+                                            }}
                                         ></input>
-                                        <button className='btn' onClick={e => handleSend(e)}>Send</button>
+                                        <button
+                                            className='btn'
+                                            onClick={e => handleSend(e)}
+                                        >Send</button>
                                     </div>
                                 )}
-                        </div>
+                            </div>
                             {walletConnected && (
-                        <div>
-                            {gameStatus === 'LOBBY' ? (
-                                <>
-                                    <button className='btn' style={{ width: "90%", padding: '5px' }} onClick={e => handleCreateRoom(e)}>Create Room</button>
-                                    <div style={{ flexDirection: 'column', alignItems: 'center' }}> ------ OR ------</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
-                                        <input
-                                            style={{ style: 'unset', padding: '7px', marginRight: '10px' }}
-                                            type='text'
-                                            value={joinRoom}
-                                            placeholder='Room Number'
-                                            onChange={e => {setJoinRoom(e.target.value)}}
-                                        ></input>
-                                        <button className='btn' onClick={e => handleJoinRoom(e)}>Join Room</button>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <button className='btn' disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
-                                </>
-                            )}
-                            {gameStatus === 'READY' && (
-                                <>
-                                    <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
-                                </>
-                            )}
-                            {gameStatus === 'PENDING' && (
-                                <>
-                                    <button disabled={true}>Game is starting ...</button>
-                                </>
+                                <div style={{ marginBottom: "10px" }}>
+                                    {gameStatus === 'LOBBY' ? (
+                                        <>
+                                            <button className='btn' style={{ width: "90%", padding: '5px' }} onClick={e => handleCreateRoom(e)}>Create Room</button>
+                                            <div style={{ flexDirection: 'column', alignItems: 'center' }}> ------ OR ------</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <input
+                                                    style={{ style: 'unset', padding: '7px', marginRight: '10px' }}
+                                                    type='text'
+                                                    value={joinRoom}
+                                                    placeholder='Room Number'
+                                                    onChange={e => { setJoinRoom(e.target.value) }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            if (joinRoom.length !== 6) {
+                                                                alert("Room ID must be 6 characters long");
+                                                                return;
+                                                            }
+                                                            socket.emit("joinRoom", { userAddress: walletAddress, roomId: joinRoom })
+                                                            setRoomId(joinRoom);
+                                                        };
+                                                    }}
+                                                ></input>
+                                                <button
+                                                    className='btn'
+                                                    onClick={e => handleJoinRoom(e)}
+                                                >Join Room</button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button className='btn' style={{ marginRight: '10px' }} disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
+                                        </>
+                                    )}
+                                    {gameStatus === 'READY' && (
+                                        <>
+                                            <button className='btn' disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
+                                        </>
+                                    )}
+                                    {gameStatus === 'PENDING' && (
+                                        <>
+                                            <button className='btn' disabled={true}>Game is starting ...</button>
+                                        </>
+                                    )}
+                                </div>
                             )}
                         </div>
                     )}
                 </div>
-                    )}
-            </div>
-        </div >
+            </div >
 
         </>
     );

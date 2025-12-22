@@ -75,11 +75,13 @@ function Board({
             ))}
             {!gameWinner ? (
                 <button
-                    disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn}
-                    onClick={e => handleMoveSubmit(e)}
+                className="btn"
+                disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn}
+                onClick={e => handleMoveSubmit(e)}
                 >Submit Move</button>
             ) : (
                 <button
+                className="btn"
                     disabled={gameWinner === ZERO_ADDRESS ? walletAddress === creatorAddress : gameWinner === walletAddress}
                     onClick={e => handleRestartGame(e)}
                 >Restart Game</button>
