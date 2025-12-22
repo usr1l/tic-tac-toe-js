@@ -98,9 +98,9 @@ export default function Game({
     opponentAddress,
     handleRestartGame
 }) {
-    const { walletAddress, walletConnected } = useWalletProvider();
+    const { walletConnected } = useWalletProvider();
     return (
-        <div className="lobby-container">
+        <div className="game-container">
             <div className="game">
                 <h1>TIC TAC TOE</h1>
                 <div>

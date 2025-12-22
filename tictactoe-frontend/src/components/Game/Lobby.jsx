@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import { ethers } from 'ethers';
 import { useWalletProvider } from '../../context/useWalletProvider';
 import Game from './Game';
-import "./Chat.css";
+import './Lobby.css';
 
 const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(0));
@@ -53,19 +53,24 @@ export default function Lobby() {
 
     const handleSend = (e) => {
         e.preventDefault();
+        if (chatMessage.length > 255) return alert("Message cannot exceed 255 characters.");
         socket.emit("chatMessage", { roomId, sender: walletAddress, message: chatMessage });
         setChatMessage("");
     };
 
     const handleCreateRoom = (e) => {
         e.preventDefault();
-        addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: Creating a room...', timestamp: Date.now() });
+        addChatMessage({ sender: 'SYSTEM', message: 'Creating a room...', timestamp: Date.now() });
         socket.emit("createRoom", { userAddress: walletAddress });
         setGameStatus('WAITING');
     };
 
     const handleJoinRoom = (e) => {
         e.preventDefault();
+        if (joinRoom.length !== 6) {
+            alert("Room ID must be 6 characters long");
+            return;
+        }
         socket.emit("joinRoom", { userAddress: walletAddress, roomId: joinRoom })
         setRoomId(joinRoom);
     };
@@ -180,7 +185,7 @@ export default function Lobby() {
         setGameWinner(null);
         addChatMessage({
             sender: 'SYSTEM',
-            message: '[SYSTEM]: You left the room.',
+            message: 'You left the room.',
             timestamp: Date.now()
         })
     };
@@ -206,7 +211,7 @@ export default function Lobby() {
             setCreatorAddress(null);
             setOpponentAddress(null);
             setGameAddress(null);
-            addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: No wallet connected.', timestamp: Date.now() });
+            addChatMessage({ sender: 'SYSTEM', message: 'No wallet connected.', timestamp: Date.now() });
 
             return;
 
@@ -215,7 +220,7 @@ export default function Lobby() {
     }, [ walletConnected, addChatMessage, isLoaded ]);
 
     useEffect(() => {
-        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `[SYSTEM]: Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
+        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
     }, [ walletConnected ]);
 
     useEffect(() => {
@@ -267,7 +272,7 @@ export default function Lobby() {
             const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signerRef.current);
             const message = {
                 sender: 'SYSTEM',
-                message: `[SYSTEM]: Contract deployment success, game has started ...`,
+                message: `Contract deployment success, game has started ...`,
                 timestamp: Date.now()
             };
 
@@ -343,8 +348,7 @@ export default function Lobby() {
     return (
         <>
             <div className='lobby-page-wrapper'>
-                <div className='main-arena'>
-                    <div className='game-section'></div>
+                <div className='game-section'>
                     {(gameContract && turn) ? (
                         <Game
                             handleMakeMove={handleMakeMove}
@@ -361,64 +365,75 @@ export default function Lobby() {
                             <h2>Waiting to Join or Create a Room...</h2>
                         </div>
                     )}
-                    <div className='chat-section'>
-                        {isLoaded && (
-                            <div className='chat-container'>
-                                <div className='chat-header'>Game Chat</div>
-                                <div className='chat-window'>
-                                    {chatHistory.map(({ sender, message, timestamp }, index) => (
-                                        <div key={sender + timestamp + index}>{message}</div>
-                                    ))}
-                                </div>
-                                <div className='input-field'>
-                                    {gameStatus !== 'LOBBY' && (
-                                        <div id="chat-message-form">
-                                            <input
-                                                id="chat-message-input"
-                                                type="text"
-                                                value={chatMessage}
-                                                placeholder='Type a message here...'
-                                                onChange={e => setChatMessage(e.target.value)}
-                                            ></input>
-                                            <button onClick={e => handleSend(e)}>Send</button>
+                </div>
+                <div className='chat-section'>
+                    {isLoaded && (
+                        <div className='chat-container'>
+                            <div className='chat-header'>Game Chat</div>
+                            <div className='chat-window'>
+                                {chatHistory.map(({ sender, message, timestamp }, index) => (
+                                    <div className={`message-wrapper`} key={sender + timestamp + index}>
+                                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '18px', color: '#799b9bff' }}>
+                                            <div>{sender === 'SYSTEM' ? 'System' : sender === walletAddress ? 'You' : 'Opponent'}</div>
+                                            <div>{new Date(timestamp).toLocaleTimeString()}</div>
                                         </div>
-                                    )}
-                                </div>
-                                {walletConnected && (
-                                    <div>
-                                        {gameStatus === 'LOBBY' ? (
-                                            <>
-                                                <button onClick={e => handleCreateRoom(e)}>Create Room</button>
-                                                <input
-                                                    type='text'
-                                                    value={joinRoom}
-                                                    placeholder='Room Number'
-                                                    onChange={e => setJoinRoom(e.target.value)}
-                                                ></input>
-                                                <button onClick={e => handleJoinRoom(e)}>Join Room</button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
-                                            </>
-                                        )}
-                                        {gameStatus === 'READY' && (
-                                            <>
-                                                <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
-                                            </>
-                                        )}
-                                        {gameStatus === 'PENDING' && (
-                                            <>
-                                                <button disabled={true}>Game is starting ...</button>
-                                            </>
-                                        )}
+                                        <p className={`message message-${sender === 'SYSTEM' ? 'system' : sender === walletAddress ? 'self' : 'opponent'}`}>{message}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className='input-field'>
+                                {gameStatus !== 'LOBBY' && (
+                                    <div id="chat-message-form" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around',width: '100%', height: '100%' }}>
+                                        <input
+                                            id="chat-message-input"
+                                            type="text"
+                                            value={chatMessage}
+                                            placeholder='Type a message here...'
+                                            onChange={e => setChatMessage(e.target.value)}
+                                            style={{style: 'unset', height: '30px', width: '60%'}}
+                                        ></input>
+                                        <button className='btn' onClick={e => handleSend(e)}>Send</button>
                                     </div>
                                 )}
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                            {walletConnected && (
+                        <div>
+                            {gameStatus === 'LOBBY' ? (
+                                <>
+                                    <button className='btn' style={{ width: "90%", padding: '5px' }} onClick={e => handleCreateRoom(e)}>Create Room</button>
+                                    <div style={{ flexDirection: 'column', alignItems: 'center' }}> ------ OR ------</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                                        <input
+                                            style={{ style: 'unset', padding: '7px', marginRight: '10px' }}
+                                            type='text'
+                                            value={joinRoom}
+                                            placeholder='Room Number'
+                                            onChange={e => {setJoinRoom(e.target.value)}}
+                                        ></input>
+                                        <button className='btn' onClick={e => handleJoinRoom(e)}>Join Room</button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <button className='btn' disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
+                                </>
+                            )}
+                            {gameStatus === 'READY' && (
+                                <>
+                                    <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
+                                </>
+                            )}
+                            {gameStatus === 'PENDING' && (
+                                <>
+                                    <button disabled={true}>Game is starting ...</button>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
+                    )}
             </div>
+        </div >
 
         </>
     );
