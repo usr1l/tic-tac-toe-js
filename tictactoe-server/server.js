@@ -8,6 +8,7 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 5001;
 const REACT_ORIGIN = "http://localhost:5173";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 // const REACT_ORIGIN = "http://localhost:4173";
 
 const rooms = {};

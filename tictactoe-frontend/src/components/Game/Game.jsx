@@ -32,6 +32,7 @@ function Board({
 
         if (gameStatus !== 'ACTIVE' || walletAddress !== turn) {
             setErrMessage("It is not your turn");
+            setTimeout(() => { setErrMessage('') }, 3000);
             return;
         };
 
@@ -94,7 +95,7 @@ function Board({
             ) : (
                 <button
                     className="btn"
-                    disabled={gameWinner === ZERO_ADDRESS ? walletAddress === creatorAddress : gameWinner === walletAddress}
+                    disabled={(gameWinner === ZERO_ADDRESS ? walletAddress === creatorAddress : gameWinner === walletAddress) || gameStatus !== 'ENDED'}
                     onClick={e => handleRestartGame(e)}
                 >Restart Game</button>
             )}
@@ -117,7 +118,7 @@ export default function Game({
     return (
         <div className="game-container">
             <div className="game">
-                <h1 style={{ color: '#fff' }}>TIC TAC TOE</h1>
+                <h1 style={{ color: '#fff', marginTop: '10px' }}>TIC TAC TOE</h1>
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                         <div style={{ flexDirection: 'column' }}>Player X:
