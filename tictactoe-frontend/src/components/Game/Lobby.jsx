@@ -281,7 +281,7 @@ export default function Lobby() {
             const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signerRef.current);
             const message = {
                 sender: 'SYSTEM',
-                message: `Contract deployment success, game has started ...`,
+                message: `Contract deployment success, game has started...`,
                 timestamp: Date.now()
             };
 
@@ -378,7 +378,11 @@ export default function Lobby() {
                         />
                     ) : (
                         <div className="placeholder-board">
-                            <h2>Waiting to Join or Create a Room...</h2>
+                            {gameStatus !== 'LOBBY' ? (
+                                <h2>Waitng for Game to Start...</h2>
+                            ) : (
+                                <h2>Waiting to Join or Create a Room...</h2>
+                            )}
                         </div>
                     )}
                 </div>
@@ -470,7 +474,7 @@ export default function Lobby() {
                                     )}
                                     {gameStatus === 'PENDING' && (
                                         <>
-                                            <button className='btn' disabled={true}>Game is starting ...</button>
+                                            <button className='btn' disabled={true}>Game is starting...</button>
                                         </>
                                     )}
                                 </div>
