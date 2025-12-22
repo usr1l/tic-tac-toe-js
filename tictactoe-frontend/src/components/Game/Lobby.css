@@ -11,7 +11,7 @@
 .game-section {
     border: solid 2px #ccc;
     width: 500px;
-    height: 700px;
+    height: 750px;
     display: flex;
     flex-direction: column;
     align-items: center;

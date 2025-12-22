@@ -49,6 +49,11 @@ function Board({
 
     const handleMoveSubmit = async (e) => {
         e.preventDefault();
+        if (row === null || col === null) {
+            setErrMessage("Please select a space to make your move.");
+            return;
+        };
+
         const success = await handleMakeMove(row, col);
 
         setMove('');
@@ -60,7 +65,7 @@ function Board({
 
     return (
         <div className="game-board">
-            <h2>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h2>
+            <h3>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h3>
             <label style={{ height: "40px", color: "red" }}>{errMessage || move}</label>
             <div style={{height: '100%', width: '100%', marginBottom: '20px'}}>
 
@@ -79,7 +84,7 @@ function Board({
             {!gameWinner ? (
                 <button
                 className="btn"
-                disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn}
+                disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn || !(row !== null && col !== null)}
                 onClick={e => handleMoveSubmit(e)}
                 >Submit Move</button>
             ) : (
@@ -110,17 +115,28 @@ export default function Game({
             <div className="game">
                 <h1 style={{color: '#fff'}}>TIC TAC TOE</h1>
                 <div>
-                    <div style={{display: 'flex', justifyContent: 'space-around'}}>
-                        <div>Player X: {creatorAddress?.slice(0, 8)}...</div>
-                        <div>Player O: {opponentAddress?.slice(0, 8)}...</div>
-                    </div>
-                    <div>Game Contract: {gameAddress?.slice(0, 8)}...</div>
-                    <div>Game Status: {gameStatus}</div>
-                    {gameWinner && (
-                        <div>
-                            {gameWinner !== ZERO_ADDRESS ? `Congratulations, the winner is ${gameWinner.slice(0, 8)}!` : "Game over. It's a tie!"}
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
+                        <div style={{flexDirection: 'column'}}>Player X:
+                            <div>{creatorAddress?.slice(0, 8)}...</div>
                         </div>
-                    )}
+                        <div style={{flexDirection: 'column'}}>
+                            <div>
+                                Winner:
+                                </div>
+                            <div>
+                            {gameStatus !== 'ENDED' ? null : gameWinner !== ZERO_ADDRESS ? `${gameWinner.slice(0, 8)}` : "Draw"}
+                                </div>
+                        </div>
+                        <div style={{flexDirection: 'column'}}>Player O:
+                            <div>{opponentAddress?.slice(0, 8)}...</div>
+                        </div>
+                    </div>
+                    <div>Game Contract:
+                        <div>
+                            {gameAddress}
+                        </div>
+                    </div>
+                    <div>Game Status: {gameStatus}</div>
                 </div>
                 {walletConnected ? (
                     <Board

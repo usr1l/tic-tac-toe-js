@@ -154,7 +154,6 @@ export default function Lobby() {
 
             socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard, winner });
         } catch (e) {
-            console.log("error: ", e);
             socket.emit('moveFail', { roomId });
             setGameStatus('ACTIVE');
             return false;
@@ -313,6 +312,12 @@ export default function Lobby() {
 
             setGameWinner(winner);
             setGameStatus('ENDED');
+            addChatMessage({
+                sender: 'SYSTEM',
+                message: `Game Over! Winner: ${winner !== ZERO_ADDRESS ? `${winner.slice(0, 8)}` : "Draw"}`,
+                timestamp: Date.now()
+            });
+            return;
         });
 
         newSocket.on('restartGame', data => {
