@@ -369,6 +369,7 @@ export default function Lobby() {
                             opponentAddress={opponentAddress}
                             gameWinner={gameWinner}
                             handleRestartGame={handleRestartGame}
+                            gameAddress={gameAddress}
                         />
                     ) : (
                         <div className="placeholder-board">
@@ -379,7 +380,12 @@ export default function Lobby() {
                 <div className='chat-section'>
                     {isLoaded && (
                         <div className='chat-container'>
-                            <div className='chat-header'>Game Chat</div>
+                            <div className='chat-header'>
+                                <div>Game Chat</div>
+                                {roomId && (
+                                    <div>Room ID: {roomId}</div>
+                                )}
+                            </div>
                             <div className='chat-window'>
                                 {chatHistory.map(({ sender, message, timestamp }, index) => (
                                     <div className={`message-wrapper`} key={sender + timestamp + index}>

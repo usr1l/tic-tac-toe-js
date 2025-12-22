@@ -62,17 +62,20 @@ function Board({
         <div className="game-board">
             <h2>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h2>
             <label style={{ height: "40px", color: "red" }}>{errMessage || move}</label>
+            <div style={{height: '100%', width: '100%', marginBottom: '20px'}}>
+
             {board?.map((row, i) => (
                 <div className="game-board-row" key={`row-${i}`}>
                     {row.map((space, j) => (
                         <Square
-                            key={`space[${i}][${j}]`}
-                            value={board[ i ][ j ] == 1 ? PLAYER_X : board[ i ][ j ] == 2 ? PLAYER_O : null}
-                            handleTileClick={(e) => handleTileClick(e, i, j)}
+                        key={`space[${i}][${j}]`}
+                        value={board[ i ][ j ] == 1 ? PLAYER_X : board[ i ][ j ] == 2 ? PLAYER_O : null}
+                        handleTileClick={(e) => handleTileClick(e, i, j)}
                         />
                     ))}
                 </div>
             ))}
+            </div>
             {!gameWinner ? (
                 <button
                 className="btn"
@@ -98,16 +101,21 @@ export default function Game({
     board,
     gameWinner,
     opponentAddress,
-    handleRestartGame
+    handleRestartGame,
+    gameAddress
 }) {
     const { walletConnected } = useWalletProvider();
     return (
         <div className="game-container">
             <div className="game">
-                <h1>TIC TAC TOE</h1>
+                <h1 style={{color: '#fff'}}>TIC TAC TOE</h1>
                 <div>
-                    <div>Player X: {creatorAddress?.slice(0, 8)}...</div>
-                    <div>Player O: {opponentAddress?.slice(0, 8)}...</div>
+                    <div style={{display: 'flex', justifyContent: 'space-around'}}>
+                        <div>Player X: {creatorAddress?.slice(0, 8)}...</div>
+                        <div>Player O: {opponentAddress?.slice(0, 8)}...</div>
+                    </div>
+                    <div>Game Contract: {gameAddress?.slice(0, 8)}...</div>
+                    <div>Game Status: {gameStatus}</div>
                     {gameWinner && (
                         <div>
                             {gameWinner !== ZERO_ADDRESS ? `Congratulations, the winner is ${gameWinner.slice(0, 8)}!` : "Game over. It's a tie!"}

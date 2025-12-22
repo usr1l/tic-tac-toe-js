@@ -65,6 +65,9 @@
     font-size: 18px;
     text-align: left;
     border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center
 }
 
 .message-wrapper {
