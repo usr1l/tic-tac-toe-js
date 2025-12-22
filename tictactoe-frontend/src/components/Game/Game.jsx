@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Square from "./Square";
 import { useWalletProvider } from "../../context/useWalletProvider";
 import "./Game.css";
@@ -32,6 +32,7 @@ function Board({
 
         if (gameStatus !== 'ACTIVE' || walletAddress !== turn) {
             setErrMessage("It is not your turn");
+            setTimeout(() => { setErrMessage('') }, 3000);
             return;
         };
 
@@ -49,6 +50,11 @@ function Board({
 
     const handleMoveSubmit = async (e) => {
         e.preventDefault();
+        if (row === null || col === null) {
+            setErrMessage("Please select a space to make your move.");
+            return;
+        };
+
         const success = await handleMakeMove(row, col);
 
         setMove('');
@@ -60,27 +66,36 @@ function Board({
 
     return (
         <div className="game-board">
-            <h2>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h2>
+            <h3>{`Current Player: ${creatorAddress === turn ? PLAYER_X : PLAYER_O}`}</h3>
             <label style={{ height: "40px", color: "red" }}>{errMessage || move}</label>
-            {board?.map((row, i) => (
-                <div className="game-board-row" key={`row-${i}`}>
-                    {row.map((space, j) => (
-                        <Square
-                            key={`space[${i}][${j}]`}
-                            value={board[ i ][ j ] == 1 ? PLAYER_X : board[ i ][ j ] == 2 ? PLAYER_O : null}
-                            handleTileClick={(e) => handleTileClick(e, i, j)}
-                        />
-                    ))}
-                </div>
-            ))}
+            <div style={{ height: '100%', width: '100%', marginBottom: '20px' }}>
+
+                {board?.map((r, i) => (
+                    <div className="game-board-row" key={`row-${i}`}>
+                        {r.map((space, j) => {
+                            return (
+                                <Square
+                                    isSelected={(row === i && col === j) ? true : false}
+                                    key={`space[${i}][${j}]`}
+                                    value={board[ i ][ j ] == 1 ? PLAYER_X : board[ i ][ j ] == 2 ? PLAYER_O : null}
+                                    handleTileClick={(e) => handleTileClick(e, i, j)}
+                                />
+
+                            )
+                        })}
+                    </div>
+                ))}
+            </div>
             {!gameWinner ? (
                 <button
-                    disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn}
+                    className="btn"
+                    disabled={gameStatus !== 'ACTIVE' || walletAddress !== turn || !(row !== null && col !== null)}
                     onClick={e => handleMoveSubmit(e)}
                 >Submit Move</button>
             ) : (
                 <button
-                    disabled={gameWinner === ZERO_ADDRESS ? walletAddress === creatorAddress : gameWinner === walletAddress}
+                    className="btn"
+                    disabled={(gameWinner === ZERO_ADDRESS ? walletAddress === creatorAddress : gameWinner === walletAddress) || gameStatus !== 'ENDED'}
                     onClick={e => handleRestartGame(e)}
                 >Restart Game</button>
             )}
@@ -96,21 +111,37 @@ export default function Game({
     board,
     gameWinner,
     opponentAddress,
-    handleRestartGame
+    handleRestartGame,
+    gameAddress
 }) {
-    const { walletAddress, walletConnected } = useWalletProvider();
+    const { walletConnected } = useWalletProvider();
     return (
-        <div className="lobby-container">
+        <div className="game-container">
             <div className="game">
-                <h1>TIC TAC TOE</h1>
+                <h1 style={{ color: '#fff', marginTop: '10px' }}>TIC TAC TOE</h1>
                 <div>
-                    <div>Player X: {creatorAddress?.slice(0, 8)}...</div>
-                    <div>Player O: {opponentAddress?.slice(0, 8)}...</div>
-                    {gameWinner && (
-                        <div>
-                            {gameWinner !== ZERO_ADDRESS ? `Congratulations, the winner is ${gameWinner.slice(0, 8)}!` : "Game over. It's a tie!"}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div style={{ flexDirection: 'column' }}>Player X:
+                            <div>{creatorAddress?.slice(0, 8)}...</div>
                         </div>
-                    )}
+                        <div style={{ flexDirection: 'column' }}>
+                            <div>
+                                Winner:
+                            </div>
+                            <div>
+                                {gameStatus !== 'ENDED' ? null : gameWinner !== ZERO_ADDRESS ? `${gameWinner.slice(0, 8)}` : "Draw"}
+                            </div>
+                        </div>
+                        <div style={{ flexDirection: 'column' }}>Player O:
+                            <div>{opponentAddress?.slice(0, 8)}...</div>
+                        </div>
+                    </div>
+                    <div>Game Contract:
+                        <div>
+                            {gameAddress}
+                        </div>
+                    </div>
+                    <div>Game Status: {gameStatus}</div>
                 </div>
                 {walletConnected ? (
                     <Board

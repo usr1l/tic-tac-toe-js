@@ -4,8 +4,10 @@ import { io } from 'socket.io-client';
 import { ethers } from 'ethers';
 import { useWalletProvider } from '../../context/useWalletProvider';
 import Game from './Game';
-import "./Chat.css";
+import './Lobby.css';
+import './Lobby.css';
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(0));
 
@@ -40,6 +42,12 @@ export default function Lobby() {
     const turnRef = useState(turn);
     const boardRef = useState(board);
 
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+
     // prevents the function from being recreated every render
     const addChatMessage = useCallback(messageObj => {
         setChatHistory(prev => [ ...prev, messageObj ]);
@@ -53,19 +61,24 @@ export default function Lobby() {
 
     const handleSend = (e) => {
         e.preventDefault();
+        if (chatMessage.length > 255) return alert("Message cannot exceed 255 characters.");
         socket.emit("chatMessage", { roomId, sender: walletAddress, message: chatMessage });
         setChatMessage("");
     };
 
     const handleCreateRoom = (e) => {
         e.preventDefault();
-        addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: Creating a room...', timestamp: Date.now() });
+        addChatMessage({ sender: 'SYSTEM', message: 'Creating a room...', timestamp: Date.now() });
         socket.emit("createRoom", { userAddress: walletAddress });
         setGameStatus('WAITING');
     };
 
     const handleJoinRoom = (e) => {
         e.preventDefault();
+        if (joinRoom.length !== 6) {
+            alert("Room ID must be 6 characters long");
+            return;
+        }
         socket.emit("joinRoom", { userAddress: walletAddress, roomId: joinRoom })
         setRoomId(joinRoom);
     };
@@ -143,7 +156,6 @@ export default function Lobby() {
 
             socket.emit('moveSuccess', { roomId, r, c, walletAddress, nextPlayer, newBoard, winner });
         } catch (e) {
-            console.log("error: ", e);
             socket.emit('moveFail', { roomId });
             setGameStatus('ACTIVE');
             return false;
@@ -180,7 +192,7 @@ export default function Lobby() {
         setGameWinner(null);
         addChatMessage({
             sender: 'SYSTEM',
-            message: '[SYSTEM]: You left the room.',
+            message: 'You left the room.',
             timestamp: Date.now()
         })
     };
@@ -206,7 +218,7 @@ export default function Lobby() {
             setCreatorAddress(null);
             setOpponentAddress(null);
             setGameAddress(null);
-            addChatMessage({ sender: 'SYSTEM', message: '[SYSTEM]: No wallet connected.', timestamp: Date.now() });
+            addChatMessage({ sender: 'SYSTEM', message: 'No wallet connected.', timestamp: Date.now() });
 
             return;
 
@@ -215,8 +227,12 @@ export default function Lobby() {
     }, [ walletConnected, addChatMessage, isLoaded ]);
 
     useEffect(() => {
-        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `[SYSTEM]: Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
+        if (walletConnected && isLoaded) addChatMessage({ sender: 'SYSTEM', message: `Wallet ${walletAddress.slice(0, 8)} connected`, timestamp: Date.now() });
     }, [ walletConnected ]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [ chatHistory ]);
 
     useEffect(() => {
         const newSocket = io.connect(SOCKET_SERVER_URL)
@@ -267,7 +283,7 @@ export default function Lobby() {
             const newGameInstance = new ethers.Contract(newGameAddress, TICTACTOE_ABI, signerRef.current);
             const message = {
                 sender: 'SYSTEM',
-                message: `[SYSTEM]: Contract deployment success, game has started ...`,
+                message: `Contract deployment success, game has started...`,
                 timestamp: Date.now()
             };
 
@@ -298,6 +314,7 @@ export default function Lobby() {
 
             setGameWinner(winner);
             setGameStatus('ENDED');
+            return;
         });
 
         newSocket.on('restartGame', data => {
@@ -343,8 +360,7 @@ export default function Lobby() {
     return (
         <>
             <div className='lobby-page-wrapper'>
-                <div className='main-arena'>
-                    <div className='game-section'></div>
+                <div className='game-section'>
                     {(gameContract && turn) ? (
                         <Game
                             handleMakeMove={handleMakeMove}
@@ -355,70 +371,115 @@ export default function Lobby() {
                             opponentAddress={opponentAddress}
                             gameWinner={gameWinner}
                             handleRestartGame={handleRestartGame}
+                            gameAddress={gameAddress}
                         />
                     ) : (
                         <div className="placeholder-board">
-                            <h2>Waiting to Join or Create a Room...</h2>
+                            {gameStatus !== 'LOBBY' ? (
+                                <h2>Waitng for Game to Start...</h2>
+                            ) : (
+                                <h2>Waiting to Join or Create a Room...</h2>
+                            )}
                         </div>
                     )}
-                    <div className='chat-section'>
-                        {isLoaded && (
-                            <div className='chat-container'>
-                                <div className='chat-header'>Game Chat</div>
-                                <div className='chat-window'>
-                                    {chatHistory.map(({ sender, message, timestamp }, index) => (
-                                        <div key={sender + timestamp + index}>{message}</div>
-                                    ))}
-                                </div>
-                                <div className='input-field'>
-                                    {gameStatus !== 'LOBBY' && (
-                                        <div id="chat-message-form">
-                                            <input
-                                                id="chat-message-input"
-                                                type="text"
-                                                value={chatMessage}
-                                                placeholder='Type a message here...'
-                                                onChange={e => setChatMessage(e.target.value)}
-                                            ></input>
-                                            <button onClick={e => handleSend(e)}>Send</button>
+                </div>
+                <div className='chat-section'>
+                    {isLoaded && (
+                        <div className='chat-container'>
+                            <div className='chat-header'>
+                                <div>Game Chat</div>
+                                {roomId && (
+                                    <div>Room ID: {roomId}</div>
+                                )}
+                            </div>
+                            <div className='chat-window'>
+                                {chatHistory.map(({ sender, message, timestamp }, index) => (
+                                    <div className={`message-wrapper`} key={sender + timestamp + index}>
+                                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '18px', color: '#799b9bff' }}>
+                                            <div>{sender === 'SYSTEM' ? 'System' : sender === walletAddress ? 'You' : 'Opponent'}</div>
+                                            <div>{new Date(timestamp).toLocaleTimeString()}</div>
                                         </div>
-                                    )}
-                                </div>
-                                {walletConnected && (
-                                    <div>
-                                        {gameStatus === 'LOBBY' ? (
-                                            <>
-                                                <button onClick={e => handleCreateRoom(e)}>Create Room</button>
-                                                <input
-                                                    type='text'
-                                                    value={joinRoom}
-                                                    placeholder='Room Number'
-                                                    onChange={e => setJoinRoom(e.target.value)}
-                                                ></input>
-                                                <button onClick={e => handleJoinRoom(e)}>Join Room</button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
-                                            </>
-                                        )}
-                                        {gameStatus === 'READY' && (
-                                            <>
-                                                <button disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
-                                            </>
-                                        )}
-                                        {gameStatus === 'PENDING' && (
-                                            <>
-                                                <button disabled={true}>Game is starting ...</button>
-                                            </>
-                                        )}
+                                        <p className={`message message-${sender === 'SYSTEM' ? 'system' : sender === walletAddress ? 'self' : 'opponent'}`}>{message}</p>
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+                            <div className='input-field'>
+                                {gameStatus !== 'LOBBY' && (
+                                    <div id="chat-message-form" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', width: '100%', height: '100%' }}>
+                                        <input
+                                            id="chat-message-input"
+                                            type="text"
+                                            value={chatMessage}
+                                            placeholder='Type a message here...'
+                                            onChange={e => setChatMessage(e.target.value)}
+                                            style={{ style: 'unset', height: '20px', padding: '7px', width: '55%', borderRadius: '5px' }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    if (chatMessage.length > 255) return alert("Message cannot exceed 255 characters.");
+                                                    socket.emit("chatMessage", { roomId, sender: walletAddress, message: chatMessage });
+                                                    setChatMessage("");
+                                                };
+                                            }}
+                                        ></input>
+                                        <button
+                                            className='btn'
+                                            onClick={e => handleSend(e)}
+                                        >Send</button>
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
+                            {walletConnected && (
+                                <div style={{ marginBottom: "10px" }}>
+                                    {gameStatus === 'LOBBY' ? (
+                                        <>
+                                            <button className='btn' style={{ width: "90%", padding: '5px' }} onClick={e => handleCreateRoom(e)}>Create Room</button>
+                                            <div style={{ flexDirection: 'column', alignItems: 'center' }}> ------ OR ------</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <input
+                                                    style={{ style: 'unset', padding: '7px', marginRight: '10px' }}
+                                                    type='text'
+                                                    value={joinRoom}
+                                                    placeholder='Room Number'
+                                                    onChange={e => { setJoinRoom(e.target.value) }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            if (joinRoom.length !== 6) {
+                                                                alert("Room ID must be 6 characters long");
+                                                                return;
+                                                            }
+                                                            socket.emit("joinRoom", { userAddress: walletAddress, roomId: joinRoom })
+                                                            setRoomId(joinRoom);
+                                                        };
+                                                    }}
+                                                ></input>
+                                                <button
+                                                    className='btn'
+                                                    onClick={e => handleJoinRoom(e)}
+                                                >Join Room</button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button className='btn' style={{ marginRight: '10px' }} disabled={gameStatus === 'PENDING' || gameStatus === 'TRANSACTING'} onClick={e => handleLeaveRoom(e)}>Leave Room</button>
+                                        </>
+                                    )}
+                                    {gameStatus === 'READY' && (
+                                        <>
+                                            <button className='btn' disabled={creatorAddress !== walletAddress} onClick={e => handleStartGame(e)}>Start Game</button>
+                                        </>
+                                    )}
+                                    {gameStatus === 'PENDING' && (
+                                        <>
+                                            <button className='btn' disabled={true}>Game is starting...</button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
-            </div>
+            </div >
 
         </>
     );

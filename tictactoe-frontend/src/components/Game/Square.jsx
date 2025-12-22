@@ -1,10 +1,10 @@
 import "./Game.css";
 
 
-export default function Square({ value, handleTileClick }) {
+export default function Square({ value, handleTileClick, isSelected }) {
 
     return (
-        <div className="square" onClick={handleTileClick} >
+        <div className={`square ${isSelected ? 'selected' : ''}`} onClick={handleTileClick} >
             {value}
         </div>
     );

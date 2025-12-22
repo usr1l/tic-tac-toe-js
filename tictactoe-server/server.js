@@ -8,6 +8,7 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 5001;
 const REACT_ORIGIN = "http://localhost:5173";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 // const REACT_ORIGIN = "http://localhost:4173";
 
 const rooms = {};
@@ -17,7 +18,7 @@ const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cors({
-    origin: "https://tictactoe-smartcontract.netlify.app" || process.env.NETLIFY_URL || REACT_ORIGIN,
+    origin: process.env.NETLIFY_URL || REACT_ORIGIN,
     methods: [ "GET", "POST" ]
 }));
 
@@ -27,7 +28,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "https://tictactoe-smartcontract.netlify.app" || process.env.NETLIFY_URL || REACT_ORIGIN,
+        origin: process.env.NETLIFY_URL || REACT_ORIGIN,
         methods: [ "GET", "POST" ],
     }
 });
@@ -77,7 +78,7 @@ function handleCreateRoom(socket, data) {
 
     socket.join(roomId);
     socket.emit('roomCreated', { roomId, creator: userAddress });
-    const message = `[SYSTEM]: Room ${roomId} created. Waiting for opponent to join...`;
+    const message = `Room ${roomId} created. Waiting for opponent to join...`;
 
     io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timestamp: Date.now() });
 }
@@ -106,7 +107,7 @@ function handleJoinRoom(socket, data) {
     socket.join(roomId);
     io.to(roomId).emit('opponentJoinedRoom', { joiner: userAddress, roomId, creator: room.creator });
 
-    const announcement = `[SYSTEM]: ${userAddress.slice(0, 8)} has joined the room. Waiting for ${room.creator.slice(0, 8)} to start the game.`;
+    const announcement = `${userAddress.slice(0, 8)} has joined the room. Waiting for ${room.creator.slice(0, 8)} to start the game.`;
     io.to(roomId).emit('announcement', { sender: 'SYSTEM', message: announcement, timestamp: Date.now() });
 }
 
@@ -119,7 +120,7 @@ function handleStartGame(socket, data) {
     };
 
     room.status = 'PENDING';
-    const message = `[SYSTEM]: Player X (${room.creator.slice(0, 8)}) is starting the game. Creating a smart contract...`;
+    const message = `Player X (${room.creator.slice(0, 8)}) is starting the game. Creating a smart contract...`;
     io.to(roomId).emit('creatingGame');
     io.to(roomId).emit('announcement', { sender: 'SYSTEM', message, timestamp: Date.now() })
 }
@@ -167,7 +168,7 @@ function handleSubmitMove(socket, data) {
 
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
-        message: `[SYSTEM]: ${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}), waiting for transaction to be validated by the blockchain ...`,
+        message: `${walletAddress.slice(0, 8)} has submitted Move(Row: ${r}, Column: ${c}), waiting for transaction to be validated by the blockchain ...`,
         timestamp: Date.now()
     });
 };
@@ -176,7 +177,7 @@ function handleMoveFail(socket, data) {
     const { roomId } = data;
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
-        message: '[SYSTEM]: Transaction failed, please try again.',
+        message: 'Transaction failed, please try again.',
         timestamp: Date.now()
     })
 };
@@ -186,9 +187,16 @@ function handleMoveSuccess(socket, data) {
     io.to(roomId).emit('moveSuccess', { walletAddress, nextPlayer, newBoard, winner });
     io.to(roomId).emit('announcement', {
         sender: 'SYSTEM',
-        message: `[SYSTEM]: Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
+        message: `Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
         timestamp: Date.now()
     });
+    if (winner) {
+        io.to(roomId).emit('announcement', {
+            sender: 'SYSTEM',
+            message: `Game Over! Winner: ${winner !== ZERO_ADDRESS ? `${winner.slice(0, 8)}` : "Draw"}`,
+            timestamp: Date.now()
+        });
+    };
 };
 
 function handleRestartGame(socket, data) {
