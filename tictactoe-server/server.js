@@ -189,6 +189,13 @@ function handleMoveSuccess(socket, data) {
         message: `Transaction successful. ${walletAddress.slice(0, 8)} made a move at (${r}, ${c}).`,
         timestamp: Date.now()
     });
+    if (winner) {
+        io.to(roomId).emit('announcement', {
+            sender: 'SYSTEM',
+            message: `Game Over! Winner: ${winner !== ZERO_ADDRESS ? `${winner.slice(0, 8)}` : "Draw"}`,
+            timestamp: Date.now()
+        });
+    };
 };
 
 function handleRestartGame(socket, data) {

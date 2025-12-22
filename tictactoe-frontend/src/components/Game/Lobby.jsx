@@ -5,7 +5,9 @@ import { ethers } from 'ethers';
 import { useWalletProvider } from '../../context/useWalletProvider';
 import Game from './Game';
 import './Lobby.css';
+import './Lobby.css';
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5001";
 const BOARD = Array(3).fill(null).map(() => Array(3).fill(0));
 
@@ -312,11 +314,6 @@ export default function Lobby() {
 
             setGameWinner(winner);
             setGameStatus('ENDED');
-            addChatMessage({
-                sender: 'SYSTEM',
-                message: `Game Over! Winner: ${winner !== ZERO_ADDRESS ? `${winner.slice(0, 8)}` : "Draw"}`,
-                timestamp: Date.now()
-            });
             return;
         });
 

@@ -21,6 +21,7 @@ h1 {
     margin-bottom: 20px;
 }
 
+
 .game-board {
     display: flex;
     flex-direction: column;
@@ -51,6 +52,10 @@ h1 {
     border: 2px solid #ced4da;
     cursor: pointer;
     transition: background-color 0.2, transform 0.1s;
+}
+
+.square.selected {
+    background-color: #ffe066;
 }
 
 .square:hover {
