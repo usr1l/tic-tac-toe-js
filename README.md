@@ -10,16 +10,14 @@ A decentralized multiplayer game featuring a **Hybrid Web3 Architecture**. This 
 
 ---
 
-## 🚀 Live Production Environment
+## 🚀 Production Environment
 * **Frontend UI:** [tictactoe-smartcontract.netlify.app](https://tictactoe-smartcontract.netlify.app)
-* **Real-Time Engine (API):** [tictactoe-server-rooms.fly.dev](https://tictactoe-server-rooms.fly.dev)
-* **Network:** Ethereum Sepolia Testnet
-
+* **Backend API:** [tictactoe-server-rooms.fly.dev](https://tictactoe-server-rooms.fly.dev)
 ---
 
 ## 🎮 Getting Started (How to Play)
 
-To participate in a match, ensure you have the **MetaMask** extension installed and your browser set to the **Sepolia Test Network**.
+(Recommended) To play with test ETH, ensure you have the **MetaMask** extension installed and your browser set to the **Sepolia Test Network**.
 
 ### 1. Configure Your Wallet
 * **Network:** Switch MetaMask to the **Sepolia Test Network**.
@@ -30,11 +28,11 @@ To participate in a match, ensure you have the **MetaMask** extension installed 
 2.  Connect your wallet and select your wallet account.
 
 ### 3. Matchmaking
-* **Create a Room:** Click **"Create Room"** to generate a unique 6-digit **Hex Code** (e.g., `bf3a12`). This creates a private namespace on the server.
-* **Join a Room:** Paste your opponent's Hex Code into the input field and click **"Join Room"**.
+* **Create a Room:** Click **"Create Room"** to generate a unique 6-digit **Room Code** (e.g., `bf3a12`).
+* **Join a Room:** Paste your opponent's Room Code into the input field and click **"Join Room"**.
 
 ### 4. Gameplay & On-Chain Settlement
-1.  **The Handshake:** The room creator initiates the **Smart Contract Deployment**. You must sign the transaction to deploy your specific game instance to the blockchain.
+1.  **Deployment:** The room creator initiates the **Smart Contract Deployment**. You must sign the transaction to deploy your specific game instance to the blockchain.
 2.  **Taking a Turn:** Click any empty square. This initiates a `makeMove` transaction via Ethers.js.
 3.  **Real-Time Sync:** While the block is mining, the UI will enter a **"Transacting"** state via Sockets to notify your opponent.
 4.  **Finality:** Once the transaction is confirmed, the board updates globally.
@@ -42,7 +40,8 @@ To participate in a match, ensure you have the **MetaMask** extension installed 
 ## 🏗️ Technical Architecture
 
 ### 1. The Real-Time Layer (Socket.io)
-The backend, hosted on **Fly.io**, manages the server chat rooms and game updates. This includes:
+The backend, hosted on **Fly.io**, manages the server chat rooms and game updates.
+
 * **Room Management:** Matchmaking via unique Hex IDs.
 
 ```javascript
@@ -151,7 +150,7 @@ export default function Lobby() {
 
 ## 📜 Smart Contract Overview
 
-The core logic of the game uses a Smart Contract Factory pattern.
+The core logic of the game uses a Smart Contract Factory.
 
 ```solidity
 contract TicTacToeFactory {
